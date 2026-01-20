@@ -21,6 +21,18 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
+    signingConfigs {
+        create("release") {
+            // Сначала пытаемся взять из переменных окружения (для CI),
+            // если их нет, берём из gradle.properties (для локальной сборки)
+            val storeFileVar = System.getenv("RELEASE_STORE_FILE") ?: project.properties["RELEASE_STORE_FILE"]?.toString()
+            storeFile = storeFileVar?.let { file(it) }
+
+            storePassword = System.getenv("RELEASE_STORE_PASSWORD") ?: project.properties["RELEASE_STORE_PASSWORD"]?.toString()
+            keyAlias = System.getenv("RELEASE_KEY_ALIAS") ?: project.properties["RELEASE_KEY_ALIAS"]?.toString()
+            keyPassword = System.getenv("RELEASE_KEY_PASSWORD") ?: project.properties["RELEASE_KEY_PASSWORD"]?.toString()
+        }
+    }
 
     buildTypes {
         release {
@@ -29,7 +41,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-
+            signingConfig = signingConfigs.getByName("release")
         }
     }
     compileOptions {
