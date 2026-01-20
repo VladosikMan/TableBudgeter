@@ -58,6 +58,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: app-release-bundle
-          path: app/release/*.apk
+          path: app\build\outputs\apk\release\*apk
           # Опционально: артефакт автоматически удалится через 7 дней
           retention-days: 7
