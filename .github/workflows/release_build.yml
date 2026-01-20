@@ -53,6 +53,17 @@ jobs:
           RELEASE_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           RELEASE_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
 
+      # 6. Восстанавливаем keystore-файл из строки Base64 (критический шаг)
+      - name: Проверить созданные файлы APK
+        run: |
+          echo "Содержимое app/build/outputs/apk/:"
+          find app/build/outputs/apk -type f 2>/dev/null || echo "Папка не найдена"
+          echo ""
+          echo "Подробный список файлов в release/:"
+          ls -la app/build/outputs/apk/release/ 2>/dev/null || echo "Папка release не найдена"
+          
+          
+
       # 8. Загружаем готовый AAB как артефакт сборки для скачивания
       - name: Upload Release AAB
         uses: actions/upload-artifact@v4
