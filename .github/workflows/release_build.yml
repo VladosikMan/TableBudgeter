@@ -1,0 +1,63 @@
+name: Build Release on Main
+
+on:
+  push:
+    branches: [ main ] # Запускается ТОЛЬКО при пуше в ветку main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. Получаем исходный код
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Устанавливаем нужную версию Java (обязательно для AGP 8.13.2+)
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      # 3. Кэшируем зависимости Gradle для ускорения последующих сборок
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.gradle/caches
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+
+      # 4. Устанавливаем Android SDK (не всегда требуется, но обеспечивает совместимость)
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      # 5. Даём права на запуск скрипта gradlew
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      # 6. Восстанавливаем keystore-файл из строки Base64 (критический шаг)
+      - name: Decode Keystore File
+        run: |
+          echo "${{ secrets.KEYSTORE_FILE }}" | base64 --decode > your-release-key.jks
+          echo "Keystore file restored."
+        env:
+          KEYSTORE_FILE: ${{ secrets.KEYSTORE_FILE }}
+
+      # 7. Собираем подписанный Android App Bundle (AAB)
+      - name: Build and Sign Release AAB
+        run: ./gradlew bundleRelease
+        env:
+          # Имя файла, который мы создали на шаге 6
+          RELEASE_STORE_FILE: your-release-key.jks
+          # Пароли и псевдоним берутся из секретов GitHub
+          RELEASE_STORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+
+      # 8. Загружаем готовый AAB как артефакт сборки для скачивания
+      - name: Upload Release AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-bundle
+          path: app/build/outputs/bundle/release/app-release.aab
+          # Опционально: артефакт автоматически удалится через 7 дней
+          retention-days: 7
