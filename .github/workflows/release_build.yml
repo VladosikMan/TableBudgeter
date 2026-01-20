@@ -43,8 +43,8 @@ jobs:
           KEYSTORE_FILE: ${{ secrets.KEYSTORE_FILE }}
 
       # 7. Собираем подписанный Android App Bundle (AAB)
-      - name: Build and Sign Release AAB
-        run: ./gradlew bundleRelease
+      - name: Build and Sign Release APK
+        run: ./gradlew assembleRelease
         env:
           # Имя файла, который мы создали на шаге 6
           RELEASE_STORE_FILE: your-release-key.jks
@@ -58,6 +58,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: app-release-bundle
-          path: app/build/outputs/bundle/release/app-release.aab
+          path: app/release/*.apk
           # Опционально: артефакт автоматически удалится через 7 дней
           retention-days: 7
