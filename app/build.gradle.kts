@@ -6,15 +6,6 @@ plugins {
 
 android {
     namespace = "com.vladgad.tablebudgeter"
-    signingConfigs {
-        create("release") {
-            // Указываем, что данные берём из переменных окружения (CI/CD)
-            storeFile = System.getenv("RELEASE_STORE_FILE")?.let { file(it) } ?: null
-            storePassword = System.getenv("RELEASE_STORE_PASSWORD")
-            keyAlias = System.getenv("RELEASE_KEY_ALIAS")
-            keyPassword = System.getenv("RELEASE_KEY_PASSWORD")
-        }
-    }
 
 
     compileSdk {
@@ -38,7 +29,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("release")
+
         }
     }
     compileOptions {
