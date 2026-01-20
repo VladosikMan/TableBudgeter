@@ -1,0 +1,29 @@
+name: Verify Feature Actions
+run-name: ${{github.actor}}
+on: 
+  push:
+    branches: ['feature/**']
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v5 [ямл] 
+      - name: Set JDK Environment
+        uses: actions/setup-java@v4
+        with:
+            distribution: 'temurin'
+            java-version: '11'
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.gradle/caches
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+      - name: Run Gradle Lint Check
+        run: ./gradlew lintDebug
+      - name: Run Unit Tests
+        run: ./gradlew testDebugUnitTest
+      - name: Build Debug APK
+        run: ./gradlew assembleDebug
+        
+            
