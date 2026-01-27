@@ -43,6 +43,10 @@ android {
             )
             signingConfig = signingConfigs.getByName("release")
         }
+        debug {
+            // Используем этот ключ для debug-сборки (Run app)
+            signingConfig = signingConfigs.getByName("release")
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -72,4 +76,17 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+    implementation("androidx.credentials:credentials:1.6.0-rc01")
+    implementation("androidx.credentials:credentials-play-services-auth:1.6.0-rc01")
+    implementation("com.google.android.libraries.identity.googleid:googleid:<latest version>")
+    implementation("com.google.android.gms:play-services-auth:21.5.0")
+    implementation("com.google.code.gson:gson:2.10.1")
+
+    // Ktor клиент с OkHttp движком (не путать с OkHttp библиотекой напрямую)
+    implementation("io.ktor:ktor-client-core:2.3.7")
+    implementation("io.ktor:ktor-client-okhttp:2.3.7")
+
+    // Для работы с Gson в Ktor
+    implementation("io.ktor:ktor-client-content-negotiation:2.3.7")
+    implementation("io.ktor:ktor-serialization-gson:2.3.7")
 }
