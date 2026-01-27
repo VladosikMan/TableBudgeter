@@ -34,7 +34,7 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
-      # 6. Восстанавливаем keystore-файл из строки Base64 (критический шаг)
+      # 6. Восстанавливаем keystore-файл из строки Base64 (критический шаг)T
       - name: Decode Keystore File
         run: |
           echo "${{ secrets.KEYSTORE_FILE }}" | base64 --decode > your-release-key.jks
