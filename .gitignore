@@ -32,3 +32,5 @@ google-services.json
 
 # Android Profiling
 *.hprof
+/app/key_budge_table
+/key_budge_table
