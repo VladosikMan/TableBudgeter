@@ -72,4 +72,9 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+
+    // Mockito для unit тестов
+    testImplementation(libs.mockito.core)
+    testImplementation(libs.mockito.kotlin)
+// для Kotlin
 }
