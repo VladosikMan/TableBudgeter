@@ -8,4 +8,3 @@ sealed class OperationStatus {
     data class Error(val message: String, val code: Int = 0) : OperationStatus()
 
 }
-
