@@ -1,5 +1,6 @@
 package com.vladgad.tablebudgeter
 
+import com.vladgad.tablebudgeter.RepositoryInterface
 import junit.framework.TestCase.assertEquals
 import org.junit.Before
 import org.junit.Test

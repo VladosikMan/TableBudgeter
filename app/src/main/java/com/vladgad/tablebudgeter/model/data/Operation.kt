@@ -1,11 +1,13 @@
-package com.vladgad.tablebudgeter.data
+package com.vladgad.tablebudgeter.model.data
+
+import java.util.Date
 
 data class Operation(
     val typeOperation: String,
     val dateOperation: String,
     val amount: Double,
     val account: String,
-    val id: Long,
+    val id: Long = Date().time,
     val tag: String = "",
     val priority: Int = 3,
     val place: String = "",
