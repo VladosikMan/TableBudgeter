@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">TableBudgeter</string>
+    <string name="database_budg">database_budg</string>
 </resources>
