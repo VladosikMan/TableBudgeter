@@ -6,9 +6,6 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
-import kotlinx.coroutines.flow.Flow
-
-
 @Dao
 interface OperationDAO {
 
@@ -25,8 +22,7 @@ interface OperationDAO {
     @Query("SELECT * FROM operations WHERE id = :id")
     suspend fun getOperationById(id: Long): OperationEntity?
 
-    @Query("SELECT * FROM operations ORDER BY date_operation DESC")
-    fun getAllOperationsFlow(): Flow<List<OperationEntity>>
+
 
     @Query("SELECT * FROM operations ORDER BY date_operation DESC")
     suspend fun getAllOperations(): List<OperationEntity>
@@ -43,30 +39,7 @@ interface OperationDAO {
     @Update
     suspend fun updateOperation(operationEntity: OperationEntity): Int
 
-    // Альтернативный метод с явным указанием ID
-    @Query("""
-        UPDATE operations 
-        SET type_operation = :typeOperation,
-            date_operation = :dateOperation,
-            amount = :amount,
-            account = :account,
-            tag = :tag,
-            priority = :priority,
-            place = :place,
-            message = :message
-        WHERE id = :id
-    """)
-    suspend fun updateOperationById(
-        id: Long,
-        typeOperation: String,
-        dateOperation: Long,
-        amount: Double,
-        account: String,
-        tag: String?,
-        priority: Int?,
-        place: String?,
-        message: String?
-    ): Int
+
 
     // ============ DELETE операции ============
 
@@ -78,5 +51,8 @@ interface OperationDAO {
 
     // @Query("DELETE FROM operations WHERE id IN (:ids)")
     // suspend fun deleteOperationsByIds(ids: List<Long>): Int
+
+    @Query("SELECT EXISTS(SELECT 1 FROM operations WHERE id = :id LIMIT 1)")
+    suspend fun isOperationExists(id: Long): Boolean
 
 }
