@@ -1,9 +1,8 @@
-package com.vladgad.tablebudgeter.model.room.entity
+package com.vladgad.tablebudgeter.model.room
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-
 
 @Entity(tableName = "operations")
 data class OperationEntity(
