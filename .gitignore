@@ -1,4 +1,4 @@
-# Gradle files
+фЧЧ# Gradle files
 .gradle/
 build/
 
@@ -32,3 +32,5 @@ google-services.json
 
 # Android Profiling
 *.hprof
+/key_budge_table
+/app/key_budge_table
