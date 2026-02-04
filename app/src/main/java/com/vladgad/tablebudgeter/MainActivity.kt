@@ -7,6 +7,10 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,7 +25,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.coroutineScope
+import androidx.lifecycle.lifecycleScope
+import com.google.android.gms.auth.api.identity.AuthorizationRequest
+import com.google.android.gms.auth.api.identity.AuthorizationResult
+import com.google.android.gms.auth.api.identity.Identity
+import com.google.android.gms.common.api.ApiException
+import com.google.android.gms.common.api.Scope
 import com.vladgad.tablebudgeter.google.GoogleSignInUtils
+import com.vladgad.tablebudgeter.google.GoogleSignInUtils.Companion.handleAuthorizationResult
+import com.vladgad.tablebudgeter.google.GoogleSignInUtils.Companion.requestSheetsAuthorization
 import com.vladgad.tablebudgeter.model.data.Operation
 import com.vladgad.tablebudgeter.model.data.OperationStatus
 import com.vladgad.tablebudgeter.model.room.BudgeterDataBaseRepository
@@ -33,14 +46,30 @@ import java.util.Locale
 import kotlin.random.Random
 
 class MainActivity : ComponentActivity() {
-    private lateinit var repository: BudgeterDataBaseRepository
 
+    private lateinit var startAuthorizationIntent: ActivityResultLauncher<IntentSenderRequest>
+    private  fun onSuccess (authorizationResult: AuthorizationResult) {
+        Toast.makeText(
+            this,
+            "Доступ к Google Sheets получен successful",
+            Toast.LENGTH_LONG
+        ).show()
+
+    }
+    private var pendingAction: (() -> Unit)? = null
+    private val TAG  = "MainActivity"
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
+        startAuthorizationIntent =
+            registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { activityResult ->
+                try {
+                    handleAuthorizationResult(activityResult, pendingAction, this, ::onSuccess)
+                } catch (e: ApiException) {
+                    e.printStackTrace()
+                    // log exception
+                }
+            }
         // Инициализация репозитория
-        repository = BudgeterDataBaseRepository(applicationContext)
-
         enableEdgeToEdge()
         setContent {
             TableBudgeterTheme {
@@ -50,81 +79,49 @@ class MainActivity : ComponentActivity() {
                             .padding(innerPadding)
                             .padding(16.dp)
                     ) {
-                        DatabaseTestButtonsScreen(repository)
+                        DatabaseTestButtonsScreen()
                     }
                 }
             }
         }
-    }
-}
 
-@Composable
-fun DatabaseTestButtonsScreen(repository: BudgeterDataBaseRepository) {
-    // Для работы с корутинами в Compose
-    val coroutineScope = rememberCoroutineScope()
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        //
-        Button(onClick = {
-            GoogleSignInUtils.doGoogleSignIn(
+        val context = this
+
+        val mainActivity = this
+        lifecycle.coroutineScope.launch {
+
+            val res = GoogleSignInUtils.doGoogleSignIn(
                 context = context,
-                scope = scope,
-                //launcher = launcher,
-                login = {
-                    Toast.makeText(context, "Login successful", Toast.LENGTH_SHORT).show()
-                }
             )
-        }) {
-            Text(text = "Просто сигн без гугла кнопки")
+            if(res){
+                requestSheetsAuthorization(
+                    onSuccess = ::onSuccess,
+                    startAuthorizationIntent, mainActivity
+                )
+            }else
+                Toast.makeText(context, "Аутентификация не прошла", Toast.LENGTH_LONG)
         }
-        Button(onClick = {
-            GoogleSignInUtils.doGoogleSignInBottom(
-                context = context,
-                scope = scope,
-                // launcher = launcher,
-                login = {
-                    Toast.makeText(context, "Login successful", Toast.LENGTH_LONG).show()
-                }
-            )
-        }) {
-            Text(text = "Сигн с гугла кнопкой")
+
+    }
+
+    @Composable
+    fun DatabaseTestButtonsScreen() {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+
+
         }
     }
-}
 
-// Функция для создания тестовой операции
-private fun createTestOperation(
-    type: String = "income",
-    amount: Double = 1000.0,
-    account: String = "Test Account"
-): Operation {
-    return Operation(
-        id = Date().time + Random.nextLong(1000), // Уникальный ID
-        typeOperation = type,
-        dateOperation = System.currentTimeMillis(),
-        amount = amount,
-        account = account,
-        tag = "test",
-        priority = Random.nextInt(1, 6),
-        place = "Test Place",
-        message = "Тестовая операция создана ${
-            SimpleDateFormat(
-                "HH:mm:ss",
-                Locale.getDefault()
-            ).format(Date())
-        }"
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun DatabaseTestButtonsPreview() {
-    TableBudgeterTheme {
-        // Для превью передаем null, т.к. нет контекста
-        DatabaseTestButtonsScreen(BudgeterDataBaseRepository(Application()))
+    @Preview(showBackground = true)
+    @Composable
+    fun DatabaseTestButtonsPreview() {
+        TableBudgeterTheme {
+            // Для превью передаем null, т.к. нет контекста
+            DatabaseTestButtonsScreen()
+        }
     }
 }
+
