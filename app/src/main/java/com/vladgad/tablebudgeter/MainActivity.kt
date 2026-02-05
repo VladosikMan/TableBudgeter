@@ -38,15 +38,18 @@ import com.vladgad.tablebudgeter.google.GoogleSignInUtils.Companion.requestSheet
 import com.vladgad.tablebudgeter.model.data.Operation
 import com.vladgad.tablebudgeter.model.data.OperationStatus
 import com.vladgad.tablebudgeter.model.room.BudgeterDataBaseRepository
+import com.vladgad.tablebudgeter.model.table.SheetsServiceHelper
 import com.vladgad.tablebudgeter.ui.theme.TableBudgeterTheme
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import kotlin.random.Random
+import kotlin.text.toLong
 
 class MainActivity : ComponentActivity() {
 
+    private val sheetsHelper: SheetsServiceHelper = SheetsServiceHelper(null )
     private lateinit var startAuthorizationIntent: ActivityResultLauncher<IntentSenderRequest>
     private  fun onSuccess (authorizationResult: AuthorizationResult) {
         Toast.makeText(
@@ -54,7 +57,7 @@ class MainActivity : ComponentActivity() {
             "Доступ к Google Sheets получен successful",
             Toast.LENGTH_LONG
         ).show()
-
+        sheetsHelper.updateAccessToken(authorizationResult.accessToken)
     }
     private var pendingAction: (() -> Unit)? = null
     private val TAG  = "MainActivity"
@@ -101,7 +104,6 @@ class MainActivity : ComponentActivity() {
             }else
                 Toast.makeText(context, "Аутентификация не прошла", Toast.LENGTH_LONG)
         }
-
     }
 
     @Composable
@@ -111,6 +113,46 @@ class MainActivity : ComponentActivity() {
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
 
+            Button(onClick = {
+                lifecycleScope.launch {
+
+                    val success = sheetsHelper.addDataRows(resources.getString(R.string.google_sheet_id), resources.getInteger(R.integer.google_sheet_id_page).toLong(), 1, generateTestOperations() )
+                    runOnUiThread {
+                        if (success) {
+                            Toast.makeText(
+                                this@MainActivity,
+                                "Заголовки добавлены", Toast.LENGTH_SHORT
+                            ).show()
+                        } else {
+                            Toast.makeText(
+                                this@MainActivity,
+                                "Ошибка добавления заголовков", Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
+
+                //                    val success = sheetsHelper.writeHeaderRowBySheetId(
+//                        "1q3EVetq4BIz0KtUWXABVmuPC3xtBVdna1UqdnLwlgqE",
+//                        resources.getInteger(R.integer.google_sheet_id_page).toLong(),
+//                    ) // Записать, например, на 1
+//                    runOnUiThread {
+//                        if (success) {
+//                            Toast.makeText(
+//                                this@MainActivity,
+//                                "Заголовки добавлены", Toast.LENGTH_SHORT
+//                            ).show()
+//                        } else {
+//                            Toast.makeText(
+//                                this@MainActivity,
+//                                "Ошибка добавления заголовков", Toast.LENGTH_SHORT
+//                            ).show()
+//                        }
+//                    }
+
+                }
+            }) {
+                Text(text = "addNewExpenseу")
+            }
 
         }
     }
@@ -122,6 +164,118 @@ class MainActivity : ComponentActivity() {
             // Для превью передаем null, т.к. нет контекста
             DatabaseTestButtonsScreen()
         }
+    }
+    fun generateTestOperations(): List<Operation> {
+        val now = System.currentTimeMillis()
+        val oneDay = 24 * 60 * 60 * 1000L
+
+        return listOf(
+            // Расходы
+            Operation(
+                typeOperation = "Расход",
+                dateOperation = now - (5 * oneDay),
+                amount = 1500.0,
+                account = "Сбербанк",
+                tag = "Продукты",
+                priority = 3,
+                place = "Пятёрочка",
+                message = "Еженедельные покупки"
+            ),
+            Operation(
+                typeOperation = "Расход",
+                dateOperation = now - (4 * oneDay),
+                amount = 800.0,
+                account = "Тинькофф",
+                tag = "Кафе",
+                priority = 2,
+                place = "Starbucks",
+                message = "Кофе с коллегами"
+            ),
+            Operation(
+                typeOperation = "Расход",
+                dateOperation = now - (3 * oneDay),
+                amount = 2500.0,
+                account = "Альфа-Банк",
+                tag = "Транспорт",
+                priority = 1,
+                place = "Яндекс.Такси",
+                message = "Поездка в аэропорт"
+            ),
+            Operation(
+                typeOperation = "Расход",
+                dateOperation = now - (2 * oneDay),
+                amount = 3200.0,
+                account = "Сбербанк",
+                tag = "Развлечения",
+                priority = 4,
+                place = "Кинотеатр",
+                message = "Билеты в кино"
+            ),
+            Operation(
+                typeOperation = "Расход",
+                dateOperation = now - oneDay,
+                amount = 450.0,
+                account = "Наличные",
+                tag = "Транспорт",
+                priority = 3,
+                place = "Метро",
+                message = "Пополнение транспортной карты"
+            ),
+
+            // Доходы
+            Operation(
+                typeOperation = "Доход",
+                dateOperation = now - (6 * oneDay),
+                amount = 75000.0,
+                account = "Сбербанк",
+                tag = "Зарплата",
+                priority = 5,
+                place = "Работа",
+                message = "Ежемесячная зарплата"
+            ),
+            Operation(
+                typeOperation = "Доход",
+                dateOperation = now - (3 * oneDay),
+                amount = 15000.0,
+                account = "Тинькофф",
+                tag = "Фриланс",
+                priority = 4,
+                place = "Дом",
+                message = "Оплата за проект"
+            ),
+            Operation(
+                typeOperation = "Доход",
+                dateOperation = now - oneDay,
+                amount = 5000.0,
+                account = "Сбербанк",
+                tag = "Кэшбэк",
+                priority = 3,
+                place = "Банк",
+                message = "Кэшбэк за покупки"
+            ),
+
+            // Переводы
+            Operation(
+                typeOperation = "Перевод",
+                dateOperation = now - (2 * oneDay),
+                amount = 10000.0,
+                account = "Сбербанк → Тинькофф",
+                tag = "Накопительный счёт",
+                priority = 3,
+                place = "Мобильный банк",
+                message = "Ежемесячные накопления"
+            ),
+            Operation(
+                typeOperation = "Перевод",
+                dateOperation = now - oneDay,
+                amount = 5000.0,
+                account = "Тинькофф → Альфа-Банк",
+                tag = "Кредит",
+                priority = 1,
+                place = "Банк",
+                message = "Погашение кредита"
+            )
+        )
     }
 }
 

@@ -1,5 +1,9 @@
 package com.vladgad.tablebudgeter.utils
 
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+
 class Utils {
     companion object{
         fun String.encodeURLParameter(): String {
@@ -23,6 +27,11 @@ class Utils {
                 .replace("@", "%40")
                 .replace("[", "%5B")
                 .replace("]", "%5D")
+        }
+        fun formatDate(timestamp: Long): String {
+            val date = Date(timestamp)
+            val formatter = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
+            return formatter.format(date)
         }
     }
 }

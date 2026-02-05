@@ -5,8 +5,12 @@ import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 
 import com.vladgad.tablebudgeter.http.KtorClient.Companion.getInstanceClientSheets
+import com.vladgad.tablebudgeter.model.data.Operation
 import com.vladgad.tablebudgeter.model.table.SheetRequestBuilder.createHeadersRequest
+import com.vladgad.tablebudgeter.model.table.SheetRequestBuilder.createInsertAndUpdateRowsRequest
+import com.vladgad.tablebudgeter.model.table.SheetRequestBuilder.createInsertEmptyRowRequest
 import com.vladgad.tablebudgeter.utils.GsonClient.Companion.getInstanceGson
+import com.vladgad.tablebudgeter.utils.Utils.Companion.formatDate
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.plugins.defaultRequest
@@ -201,37 +205,6 @@ class SheetsServiceHelper(private var accessToken: String?) {
         }.toString()
     }
 
-    // 3. ЗАПИСАТЬ ДАННЫЕ
-    suspend fun writeData(
-        spreadsheetId: String,
-        range: String,
-        values: List<List<Any>>
-    ): Boolean = withContext(Dispatchers.IO) {
-        val token = accessToken ?: return@withContext false
-
-        val encodedRange = range.encodeURLParameter()
-        val url =
-            "https://sheets.googleapis.com/v4/spreadsheets/$spreadsheetId/values/$encodedRange"
-
-        // Формируем тело запроса
-        val requestBody = JsonObject().apply {
-            add("values", gson.toJsonTree(values))
-        }
-
-        return@withContext try {
-            val response: HttpResponse = client.put(url) {
-                header(HttpHeaders.Authorization, "Bearer $token")
-                parameter("valueInputOption", "RAW")
-                setBody(gson.toJson(requestBody))
-            }
-
-            response.status.isSuccess()
-        } catch (e: Exception) {
-            e.printStackTrace()
-            false
-        }
-    }
-
     // 4. ПОЛУЧИТЬ ИНФОРМАЦИЮ О ТАБЛИЦЕ
     suspend fun getSpreadsheetInfo(spreadsheetId: String): JsonObject? =
         withContext(Dispatchers.IO) {
@@ -252,107 +225,69 @@ class SheetsServiceHelper(private var accessToken: String?) {
         }
 
 
-    // Добавьте этот метод в ваш класс SheetsServiceHelper
-    suspend fun addNewSheetSimple(
-        spreadsheetId: String,
-        title: String,
-        index: Int? = null,
-        rowCount: Int = 100000,
-        columnCount: Int = 12
-    ): Int? = withContext(Dispatchers.IO) {
-        val token = accessToken ?: return@withContext null
-
-        val url = "https://sheets.googleapis.com/v4/spreadsheets/$spreadsheetId:batchUpdate"
-
-        // Создаем JSON запрос напрямую через Gson JsonObject
-        val requestJson = JsonObject().apply {
-            val requestsArray = JsonArray()
-            val requestObject = JsonObject().apply {
-                val addSheetObject = JsonObject().apply {
-                    val propertiesObject = JsonObject().apply {
-                        addProperty("title", title)
-
-                        // Добавляем index, только если он не null
-                        index?.let { addProperty("index", it) }
-
-                        // Добавляем gridProperties
-                        val gridProperties = JsonObject().apply {
-                            addProperty("rowCount", rowCount)
-                            addProperty("columnCount", columnCount)
-                        }
-                        add("gridProperties", gridProperties)
-                    }
-                    add("properties", propertiesObject)
-                }
-                add("addSheet", addSheetObject)
-            }
-            requestsArray.add(requestObject)
-            add("requests", requestsArray)
-        }
-
-        return@withContext try {
-            val response: String = client.post(url) {
-                header("Authorization", "Bearer $token")
-                header("Content-Type", "application/json")
-                setBody(gson.toJson(requestJson))
-            }.body()
-
-            // Парсим ответ и извлекаем sheetId
-            val jsonResponse = gson.fromJson(response, JsonObject::class.java)
-            val replies = jsonResponse.getAsJsonArray("replies")
-
-            if (replies != null && replies.size() > 0) {
-                val firstReply = replies.get(0).asJsonObject
-                val addSheet = firstReply.getAsJsonObject("addSheet")
-                addSheet?.getAsJsonObject("properties")?.get("sheetId")?.asInt
-            } else {
-                null
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
-        }
-    }
-
-    // Вспомогательная функция для создания ячейки с текстом
-    private fun createCell(value: String): JsonObject {
-        return JsonObject().apply {
-            add("userEnteredValue", JsonObject().apply {
-                addProperty("stringValue", value)
-            })
-        }
-    }
-
     suspend fun insertEmptyRow(
         spreadsheetId: String,
-        sheetId: Int,
+        sheetId: Long,
         rowIndex: Int
     ): Boolean = withContext(Dispatchers.IO) {
         val token = accessToken ?: return@withContext false
+        val url = "https://sheets.googleapis.com/v4/spreadsheets/$spreadsheetId:batchUpdate"
+        val requestBody1 = gson.toJson(
+            createInsertEmptyRowRequest(
+                sheetId = sheetId,
+                rowIndex = rowIndex,
+            )
+        )
+        return@withContext try {
+            val response: HttpResponse = client.post(url) {
+                header("Authorization", "Bearer $token")
+                header("Content-Type", "application/json")
+                setBody(requestBody1)
+            }
+            response.status.isSuccess()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
+
+    suspend fun addDataRows(spreadsheetId: String,
+                            sheetId: Long, // Используем sheetId
+                            startRowIndex: Int,
+                            operations: List<Operation>): Boolean = withContext(Dispatchers.IO){
 
         val url = "https://sheets.googleapis.com/v4/spreadsheets/$spreadsheetId:batchUpdate"
 
-        val requestBody = JsonObject().apply {
-            add("requests", JsonArray().apply {
-                add(JsonObject().apply {
-                    add("insertDimension", JsonObject().apply {
-                        add("range", JsonObject().apply {
-                            addProperty("sheetId", sheetId)
-                            addProperty("dimension", "ROWS")
-                            addProperty("startIndex", rowIndex)
-                            addProperty("endIndex", rowIndex + 1) // Вставляем 1 строку
-                        })
-                        addProperty("inheritFromBefore", false)
-                    })
-                })
-            })
+        val token = accessToken ?: return@withContext false
+        // 1. Преобразуем операции в строки таблицы
+        val dataRows = operations.map { operation ->
+            listOf<Any>(
+                operation.typeOperation,
+                formatDate(operation.dateOperation),
+                operation.amount,
+                operation.account,
+                operation.tag,
+                operation.priority,
+                operation.place,
+                operation.message
+                // Можно добавить operation.id если нужно
+            )
         }
+
+
+        val requestBody = gson.toJson(
+            createInsertAndUpdateRowsRequest(
+                sheetId = sheetId,
+                startRowIndex = startRowIndex,
+                dataRows = dataRows
+            )
+        )
 
         return@withContext try {
             val response: HttpResponse = client.post(url) {
                 header("Authorization", "Bearer $token")
                 header("Content-Type", "application/json")
-                setBody(gson.toJson(requestBody))
+                setBody(requestBody)
             }
             response.status.isSuccess()
         } catch (e: Exception) {
@@ -363,7 +298,7 @@ class SheetsServiceHelper(private var accessToken: String?) {
 
     suspend fun addDataRow(
         spreadsheetId: String,
-        sheetId: Int, // Используем sheetId
+        sheetId: Long, // Используем sheetId
         rowIndex: Int,
         values: List<Any>,
         insertRow: Boolean = true
