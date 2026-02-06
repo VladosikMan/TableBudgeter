@@ -2,6 +2,19 @@ package com.vladgad.tablebudgeter.model.table
 
 import com.google.gson.annotations.SerializedName
 
+// Data классы для ответа от Google Sheets API
+data class ValueRange(
+    @SerializedName("range")
+    val range: String,
+
+    @SerializedName("majorDimension")
+    val majorDimension: String, // "ROWS" или "COLUMNS"
+
+    @SerializedName("values")
+    val values: List<List<Any>>?
+)
+
+
 data class CellData(
     @SerializedName("userEnteredValue") val userEnteredValue: ExtendedValue
 )

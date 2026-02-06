@@ -17,3 +17,7 @@ data class Operation(
         require(priority in 1..5) { "Приоритет должен быть от 1 до 5: $priority" }
     }
 }
+
+data class OperationList(
+    val operationList: List<Operation>
+)

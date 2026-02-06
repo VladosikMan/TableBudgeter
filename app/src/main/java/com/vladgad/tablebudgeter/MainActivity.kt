@@ -49,9 +49,9 @@ import kotlin.text.toLong
 
 class MainActivity : ComponentActivity() {
 
-    private val sheetsHelper: SheetsServiceHelper = SheetsServiceHelper(null )
+    private val sheetsHelper: SheetsServiceHelper = SheetsServiceHelper(null)
     private lateinit var startAuthorizationIntent: ActivityResultLauncher<IntentSenderRequest>
-    private  fun onSuccess (authorizationResult: AuthorizationResult) {
+    private fun onSuccess(authorizationResult: AuthorizationResult) {
         Toast.makeText(
             this,
             "Доступ к Google Sheets получен successful",
@@ -59,8 +59,9 @@ class MainActivity : ComponentActivity() {
         ).show()
         sheetsHelper.updateAccessToken(authorizationResult.accessToken)
     }
+
     private var pendingAction: (() -> Unit)? = null
-    private val TAG  = "MainActivity"
+    private val TAG = "MainActivity"
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         startAuthorizationIntent =
@@ -96,12 +97,12 @@ class MainActivity : ComponentActivity() {
             val res = GoogleSignInUtils.doGoogleSignIn(
                 context = context,
             )
-            if(res){
+            if (res) {
                 requestSheetsAuthorization(
                     onSuccess = ::onSuccess,
                     startAuthorizationIntent, mainActivity
                 )
-            }else
+            } else
                 Toast.makeText(context, "Аутентификация не прошла", Toast.LENGTH_LONG)
         }
     }
@@ -116,22 +117,26 @@ class MainActivity : ComponentActivity() {
             Button(onClick = {
                 lifecycleScope.launch {
 
-                    val success = sheetsHelper.addDataRows(resources.getString(R.string.google_sheet_id), resources.getInteger(R.integer.google_sheet_id_page).toLong(), 1, generateTestOperations() )
+                    //val success = sheetsHelper.addDataRows(resources.getString(R.string.google_sheet_id), resources.getInteger(R.integer.google_sheet_id_page).toLong(), 1, generateTestOperations() )
+                    val success = sheetsHelper.getAllRows(
+                        resources.getString(R.string.google_sheet_id),
+                        resources.getInteger(R.integer.google_sheet_id_page).toLong()
+                    )
                     runOnUiThread {
-                        if (success) {
-                            Toast.makeText(
-                                this@MainActivity,
-                                "Заголовки добавлены", Toast.LENGTH_SHORT
-                            ).show()
-                        } else {
-                            Toast.makeText(
-                                this@MainActivity,
-                                "Ошибка добавления заголовков", Toast.LENGTH_SHORT
-                            ).show()
-                        }
+//                        if (success) {
+//                            Toast.makeText(
+//                                this@MainActivity,
+//                                "Заголовки добавлены", Toast.LENGTH_SHORT
+//                            ).show()
+//                        } else {
+//                            Toast.makeText(
+//                                this@MainActivity,
+//                                "Ошибка добавления заголовков", Toast.LENGTH_SHORT
+//                            ).show()
+//                        }
                     }
 
-                //                    val success = sheetsHelper.writeHeaderRowBySheetId(
+                    //                    val success = sheetsHelper.writeHeaderRowBySheetId(
 //                        "1q3EVetq4BIz0KtUWXABVmuPC3xtBVdna1UqdnLwlgqE",
 //                        resources.getInteger(R.integer.google_sheet_id_page).toLong(),
 //                    ) // Записать, например, на 1
@@ -165,6 +170,7 @@ class MainActivity : ComponentActivity() {
             DatabaseTestButtonsScreen()
         }
     }
+
     fun generateTestOperations(): List<Operation> {
         val now = System.currentTimeMillis()
         val oneDay = 24 * 60 * 60 * 1000L

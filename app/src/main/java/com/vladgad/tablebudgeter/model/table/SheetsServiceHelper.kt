@@ -6,6 +6,8 @@ import com.google.gson.JsonObject
 
 import com.vladgad.tablebudgeter.http.KtorClient.Companion.getInstanceClientSheets
 import com.vladgad.tablebudgeter.model.data.Operation
+import com.vladgad.tablebudgeter.model.data.OperationList
+import com.vladgad.tablebudgeter.model.data.parseListOperation
 import com.vladgad.tablebudgeter.model.table.SheetRequestBuilder.createHeadersRequest
 import com.vladgad.tablebudgeter.model.table.SheetRequestBuilder.createInsertAndUpdateRowsRequest
 import com.vladgad.tablebudgeter.model.table.SheetRequestBuilder.createInsertEmptyRowRequest
@@ -73,7 +75,6 @@ class SheetsServiceHelper(private var accessToken: String?) {
         }
     }
 
-
     suspend fun writeHeaderRowBySheetId(
         spreadsheetId: String,
         sheetId: Long,
@@ -139,7 +140,6 @@ class SheetsServiceHelper(private var accessToken: String?) {
                 null
             }
         }
-
 
     // 5. ДОБАВИТЬ НОВЫЙ ЛИСТ
     suspend fun addNewSheet(spreadsheetId: String, sheetTitle: String): Boolean =
@@ -224,7 +224,6 @@ class SheetsServiceHelper(private var accessToken: String?) {
             }
         }
 
-
     suspend fun insertEmptyRow(
         spreadsheetId: String,
         sheetId: Long,
@@ -251,10 +250,12 @@ class SheetsServiceHelper(private var accessToken: String?) {
         }
     }
 
-    suspend fun addDataRows(spreadsheetId: String,
-                            sheetId: Long, // Используем sheetId
-                            startRowIndex: Int,
-                            operations: List<Operation>): Boolean = withContext(Dispatchers.IO){
+    suspend fun addDataRows(
+        spreadsheetId: String,
+        sheetId: Long, // Используем sheetId
+        startRowIndex: Int,
+        operations: List<Operation>
+    ): Boolean = withContext(Dispatchers.IO) {
 
         val url = "https://sheets.googleapis.com/v4/spreadsheets/$spreadsheetId:batchUpdate"
 
@@ -296,118 +297,116 @@ class SheetsServiceHelper(private var accessToken: String?) {
         }
     }
 
-    suspend fun addDataRow(
+    suspend fun getAllRows(
         spreadsheetId: String,
-        sheetId: Long, // Используем sheetId
-        rowIndex: Int,
-        values: List<Any>,
-        insertRow: Boolean = true
-    ): Boolean = withContext(Dispatchers.IO) {
-        // 1. Если нужно, вставляем пустую строку (уже использует sheetId)
-        if (insertRow) {
-            val insertSuccess = insertEmptyRow(spreadsheetId, sheetId, rowIndex)
-            if (!insertSuccess) return@withContext false
+        sheetId: Long,
+        includeEmptyRows: Boolean = false
+    ): List<Operation> = withContext(Dispatchers.IO) {
+        val token = accessToken ?: throw IllegalStateException("No access token")
+
+        // 1. Определяем название листа (sheet name)
+        val targetSheetName = getSheetNameById(spreadsheetId, sheetId, token)
+
+
+        // 2. Формируем URL для запроса
+        val range = escapeSheetName(targetSheetName) // Экранируем название листа
+        val url = "https://sheets.googleapis.com/v4/spreadsheets/$spreadsheetId/values/$range"
+
+        // 3. Выполняем запрос
+        val response = client.get(url) {
+            header("Authorization", "Bearer $token")
+            contentType(ContentType.Application.Json)
         }
 
-        // 2. Записываем данные через batchUpdate, указывая sheetId
-        val token = accessToken ?: return@withContext false
-
-        val url = "https://sheets.googleapis.com/v4/spreadsheets/$spreadsheetId:batchUpdate"
-
-        // Создаем запрос на обновление ячеек с привязкой к sheetId
-        val requestBody = JsonObject().apply {
-            add("requests", JsonArray().apply {
-                add(JsonObject().apply {
-                    add("updateCells", JsonObject().apply {
-                        // Указываем область: привязываемся к sheetId и строке
-                        add("range", JsonObject().apply {
-                            addProperty("sheetId", sheetId)
-                            addProperty("startRowIndex", rowIndex)
-                            addProperty("endRowIndex", rowIndex + 1) // Одна строка
-                            addProperty("startColumnIndex", 0) // Колонка A (0)
-                            addProperty("endColumnIndex", 4)   // До колонки D (4, т.к. 4 элемента)
-                        })
-                        addProperty("fields", "userEnteredValue")
-                        // Данные строки
-                        add("rows", JsonArray().apply {
-                            add(JsonObject().apply {
-                                add("values", JsonArray().apply {
-                                    values.forEach { value ->
-                                        add(JsonObject().apply {
-                                            add("userEnteredValue", JsonObject().apply {
-                                                when (value) {
-                                                    is String -> addProperty("stringValue", value)
-                                                    is Number -> addProperty("numberValue", value)
-                                                    else -> addProperty(
-                                                        "stringValue",
-                                                        value.toString()
-                                                    )
-                                                }
-                                            })
-                                        })
-                                    }
-                                })
-                            })
-                        })
-                    })
-                })
-            })
+        if (!response.status.isSuccess()) {
+            val errorBody = response.bodyAsText()
+            throw RuntimeException("Failed to get rows: ${response.status}. Error: $errorBody")
         }
 
-        return@withContext try {
-            val response: HttpResponse = client.post(url) {
-                header("Authorization", "Bearer $token")
-                header("Content-Type", "application/json")
-                setBody(gson.toJson(requestBody))
+
+        val json = gson.fromJson(response.bodyAsText(), ValueRange::class.java)
+        // 5. Преобразуем данные
+        val allRows = json.values?.map { row ->
+            row.map { cell ->
+                when (cell) {
+                    is String -> cell
+                    is Number -> cell.toString()
+                    is Boolean -> if (cell) "TRUE" else "FALSE"
+                    else -> cell?.toString() ?: ""
+                }
             }
-            // ... (обработка ответа с логированием ошибок, как обсуждалось ранее)
-            response.status.isSuccess()
-        } catch (e: Exception) {
-            e.printStackTrace()
-            false
+        } ?: emptyList()
+
+        // 6. Фильтруем пустые строки, если нужно
+        if (includeEmptyRows) {
+            allRows
+        } else {
+            allRows.filter { row ->
+                row.any { cell -> cell.isNotBlank() }
+            }
         }
+
+        val list = parseListOperation(allRows)
+
+        return@withContext list
     }
 
     suspend fun close() {
         client.close()
     }
 
+
+    // Вспомогательная функция для получения названия листа по ID
+    private suspend fun getSheetNameById(
+        spreadsheetId: String,
+        sheetId: Long,
+        token: String
+    ): String {
+        val url = "https://sheets.googleapis.com/v4/spreadsheets/$spreadsheetId"
+
+        val response = client.get(url) {
+            header("Authorization", "Bearer $token")
+            contentType(ContentType.Application.Json)
+        }
+
+        if (!response.status.isSuccess()) {
+            throw RuntimeException("Failed to get spreadsheet info")
+        }
+
+        val jsonString = response.bodyAsText()
+        val spreadsheet = gson.fromJson(jsonString, Map::class.java)
+        val sheets = spreadsheet["sheets"] as? List<Map<String, Any>>
+            ?: throw RuntimeException("No sheets found")
+
+        val sheet = sheets.find { sheetData ->
+            val properties = sheetData["properties"] as? Map<String, Any>
+            val sheetIdValue = properties?.get("sheetId") as? Number
+            sheetIdValue?.toLong() == sheetId
+        }
+
+        val properties = sheet?.get("properties") as? Map<String, Any>
+        val title = properties?.get("title") as? String
+
+        return title ?: throw RuntimeException("Sheet with ID $sheetId not found")
+    }
+
+    // Экранирование названия листа (нужно для листов с пробелами и спецсимволами)
+    private fun escapeSheetName(sheetName: String): String {
+        // Если название содержит спецсимволы, заключаем в одинарные кавычки
+        val needsQuotes = sheetName.any {
+            !it.isLetterOrDigit() && it != '_'
+        }
+
+        return if (needsQuotes) {
+            // Заменяем одинарные кавычки на двойные
+            val escaped = sheetName.replace("'", "''")
+            "'$escaped'"
+        } else {
+            sheetName
+        }
+
+
+    }
 }
-
-// Класс для более типобезопасного подхода (опционально)
-data class SpreadsheetInfo(
-    val spreadsheetId: String,
-    val properties: SpreadsheetProperties,
-    val sheets: List<SheetInfo>
-)
-
-data class SpreadsheetProperties(
-    val title: String,
-    val locale: String? = null,
-    val timeZone: String? = null
-)
-
-data class SheetInfo(
-    val properties: SheetProperties,
-    val data: List<GridData>? = null
-)
-
-data class SheetProperties(
-    val sheetId: Int,
-    val title: String,
-    val index: Int,
-    val gridProperties: GridProperties? = null
-)
-
-data class GridProperties(
-    val rowCount: Int,
-    val columnCount: Int
-)
-
-data class GridData(
-    val startRow: Int,
-    val startColumn: Int,
-    val rowData: List<RowData>
-)
 
 
