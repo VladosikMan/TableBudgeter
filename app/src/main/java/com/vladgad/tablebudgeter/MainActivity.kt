@@ -50,7 +50,10 @@ import kotlin.time.Clock.System.now
 
 class MainActivity : ComponentActivity() {
 
-    private val sheetsHelper: SheetsServiceHelper = SheetsServiceHelper(null)
+    private val spreadsheetId = resources.getString(R.string.google_sheet_id)
+    private val sheetId = resources.getInteger(R.integer.google_sheet_id_page).toLong()
+
+    private val sheetsHelper: SheetsServiceHelper = SheetsServiceHelper()
     private lateinit var startAuthorizationIntent: ActivityResultLauncher<IntentSenderRequest>
     private fun onSuccess(authorizationResult: AuthorizationResult) {
         Toast.makeText(

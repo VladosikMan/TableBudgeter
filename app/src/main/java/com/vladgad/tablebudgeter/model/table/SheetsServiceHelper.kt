@@ -27,7 +27,20 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-class SheetsServiceHelper(private var accessToken: String?) {
+class SheetsServiceHelper() {
+    companion object{
+        @Volatile
+        private  var INSTANCE: SheetsServiceHelper? = null
+
+        fun getInstance(): SheetsServiceHelper{
+            return  INSTANCE?: synchronized(this){
+                val client = SheetsServiceHelper()
+                INSTANCE = client
+                client
+            }
+        }
+    }
+    private var accessToken: String? = null
     private val headers =
         listOf("Действие", "Дата", "Сумма", "Счёт", "Приоритет", "Тэг", "Место", "Сообщение", "Id")
 
@@ -259,9 +272,9 @@ class SheetsServiceHelper(private var accessToken: String?) {
         sheetId: Long, // Используем sheetId
         startRowIndex: Int,
         operations: List<Operation>
-    ): Boolean = withContext(Dispatchers.IO) {
+    ): Long = withContext(Dispatchers.IO) {
         val url = "https://sheets.googleapis.com/v4/spreadsheets/$spreadsheetId:batchUpdate"
-        val token = accessToken ?: return@withContext false
+        val token = accessToken ?: return@withContext -1
         // 1. Преобразуем операции в строки таблицы
         val dataRows = operations.map { operation ->
             listOf<Any>(
@@ -290,10 +303,13 @@ class SheetsServiceHelper(private var accessToken: String?) {
                 header("Content-Type", "application/json")
                 setBody(requestBody)
             }
-            response.status.isSuccess()
+            if(response.status.isSuccess())
+                return@withContext  1
+            else
+                return@withContext -1
         } catch (e: Exception) {
             e.printStackTrace()
-            false
+            - 1
         }
     }
 
