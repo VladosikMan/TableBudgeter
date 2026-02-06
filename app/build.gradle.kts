@@ -3,16 +3,10 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
-
-
 }
-
 
 android {
     namespace = "com.vladgad.tablebudgeter"
-
-
-
     compileSdk {
         version = release(36)
     }
@@ -30,12 +24,16 @@ android {
         create("release") {
             // Сначала пытаемся взять из переменных окружения (для CI),
             // если их нет, берём из gradle.properties (для локальной сборки)
-            val storeFileVar = System.getenv("RELEASE_STORE_FILE") ?: project.properties["RELEASE_STORE_FILE"]?.toString()
+            val storeFileVar = System.getenv("RELEASE_STORE_FILE")
+                ?: project.properties["RELEASE_STORE_FILE"]?.toString()
             storeFile = storeFileVar?.let { file(it) }
 
-            storePassword = System.getenv("RELEASE_STORE_PASSWORD") ?: project.properties["RELEASE_STORE_PASSWORD"]?.toString()
-            keyAlias = System.getenv("RELEASE_KEY_ALIAS") ?: project.properties["RELEASE_KEY_ALIAS"]?.toString()
-            keyPassword = System.getenv("RELEASE_KEY_PASSWORD") ?: project.properties["RELEASE_KEY_PASSWORD"]?.toString()
+            storePassword = System.getenv("RELEASE_STORE_PASSWORD")
+                ?: project.properties["RELEASE_STORE_PASSWORD"]?.toString()
+            keyAlias = System.getenv("RELEASE_KEY_ALIAS")
+                ?: project.properties["RELEASE_KEY_ALIAS"]?.toString()
+            keyPassword = System.getenv("RELEASE_KEY_PASSWORD")
+                ?: project.properties["RELEASE_KEY_PASSWORD"]?.toString()
         }
     }
 
@@ -48,6 +46,10 @@ android {
             )
             signingConfig = signingConfigs.getByName("release")
         }
+        debug {
+            // Используем этот ключ для debug-сборки (Run app)
+            signingConfig = signingConfigs.getByName("release")
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -55,8 +57,7 @@ android {
     }
     kotlin {
         compilerOptions {
-            languageVersion = org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_0
-             jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11
+            jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11
         }
     }
     buildFeatures {
@@ -84,9 +85,25 @@ dependencies {
     // Mockito для unit тестов
     testImplementation(libs.mockito.core)
     testImplementation(libs.mockito.kotlin)
-// для Kotlin
+    // для Kotlin
 
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
     ksp(libs.room.compiler)
+
+    //Google
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials.play.services.auth)
+    implementation(libs.googleid)
+    implementation(libs.play.services.auth)
+
+    implementation(libs.gson)
+
+    // Ktor клиент с OkHttp движком (не путать с OkHttp библиотекой напрямую)
+    implementation(libs.ktor.client.core)
+    implementation(libs.ktor.client.okhttp)
+
+    // Для работы с Gson в Ktor
+    implementation(libs.ktor.client.content.negotiation)
+    implementation(libs.ktor.serialization.gson)
 }

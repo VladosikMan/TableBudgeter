@@ -8,8 +8,8 @@ data class Operation(
     val amount: Double,
     val account: String,
     val id: Long = Date().time,
-    val tag: String = "",
     val priority: Int = 3,
+    val tag: String = "",
     val place: String = "",
     val message: String = ""
 ) {
@@ -17,3 +17,7 @@ data class Operation(
         require(priority in 1..5) { "Приоритет должен быть от 1 до 5: $priority" }
     }
 }
+
+data class OperationList(
+    val operationList: List<Operation>
+)

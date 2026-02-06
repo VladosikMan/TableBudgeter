@@ -1,4 +1,7 @@
 <resources>
     <string name="app_name">TableBudgeter</string>
     <string name="database_budg">database_budg</string>
+    <string name="android_client_id">666807287933-trl9dh6gi82tk7l6ma3rm0b0tb9a155n.apps.googleusercontent.com</string>
+    <string name="web_client_id">666807287933-sk0iovgf3pkmq22lmsrrhf4drijk77r9.apps.googleusercontent.com</string>
+    <string name="google_sheet_id">1q3EVetq4BIz0KtUWXABVmuPC3xtBVdna1UqdnLwlgqE</string>
 </resources>
