@@ -10,7 +10,8 @@ import com.vladgad.tablebudgeter.model.data.OperationList
 import com.vladgad.tablebudgeter.model.data.parseListOperation
 import com.vladgad.tablebudgeter.model.table.SheetRequestBuilder.createHeadersRequest
 import com.vladgad.tablebudgeter.model.table.SheetRequestBuilder.createInsertAndUpdateRowsRequest
-import com.vladgad.tablebudgeter.model.table.SheetRequestBuilder.createInsertEmptyRowRequestimport com.vladgad.tablebudgeter.model.table.SheetRequestBuilder.createUpdateRowsRequest
+import com.vladgad.tablebudgeter.model.table.SheetRequestBuilder.createInsertEmptyRowRequest
+import com.vladgad.tablebudgeter.model.table.SheetRequestBuilder.createUpdateRowsRequest
 import com.vladgad.tablebudgeter.utils.GsonClient.Companion.getInstanceGson
 import com.vladgad.tablebudgeter.utils.Utils.Companion.formatDate
 import io.ktor.client.*
@@ -485,6 +486,46 @@ class SheetsServiceHelper(private var accessToken: String?) {
 
     }
 
+    suspend fun deleteRowById(
+        spreadsheetId: String,
+        sheetId: Long,
+        id: Long,
+        startColumn: Int = 0 // С какой колонки начинать обновление
+    ): Boolean = withContext(Dispatchers.IO) {
+
+        val token = accessToken ?: return@withContext false
+        val sheetName = getSheetNameById(spreadsheetId, sheetId, token)
+        val rowIndex = getNumRowById(spreadsheetId, sheetName, id)
+        // 1. Создаем запрос на удаление строки
+        val request = BatchUpdateRequest(
+            requests = listOf(
+                SheetRequest.DeleteDimension(
+                    deleteDimension = DeleteDimensionRequest(
+                        range = GridRange(
+                            sheetId = sheetId,
+                            dimension = "ROWS",
+                            startIndex = rowIndex,
+                            endIndex = rowIndex + 1 // Удаляем одну строку
+                        )
+                    )
+                )
+            )
+        )
+
+        // 2. Отправляем запрос
+        return@withContext try {
+            val response = client.post("https://sheets.googleapis.com/v4/spreadsheets/$spreadsheetId:batchUpdate") {
+                header("Authorization", "Bearer $token")
+                contentType(ContentType.Application.Json)
+                setBody(gson.toJson(request))
+            }
+            response.status.isSuccess()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+
+    }
     suspend fun close() {
         client.close()
     }

@@ -50,6 +50,10 @@ data class InsertDimensionRequest(
     val range: GridRange,
     val inheritFromBefore: Boolean,
 )
+data class DeleteDimensionRequest(
+    val range: GridRange
+)
+
 
 sealed class SheetRequest {
     data class UpdateCells(
@@ -60,6 +64,9 @@ sealed class SheetRequest {
         val insertDimension: InsertDimensionRequest
     ) : SheetRequest()
 
+    data class DeleteDimension(
+        val deleteDimension: DeleteDimensionRequest
+    ) : SheetRequest()
     // Можно расширять другими типами запросов
 }
 

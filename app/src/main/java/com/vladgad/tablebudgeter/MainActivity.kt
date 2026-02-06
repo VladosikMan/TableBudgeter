@@ -120,17 +120,9 @@ class MainActivity : ComponentActivity() {
 
                     //val success = sheetsHelper.addDataRows(resources.getString(R.string.google_sheet_id), resources.getInteger(R.integer.google_sheet_id_page).toLong(), 1, generateTestOperations() )
                    //val success = sheetsHelper.updateRowById(resources.getString(R.string.google_sheet_id), resources.getInteger(R.integer.google_sheet_id_page).toLong(), 7, generateTestOperations2() )
-                   val success = sheetsHelper.updateRowById(resources.getString(R.string.google_sheet_id), resources.getInteger(R.integer.google_sheet_id_page).toLong(), 7, Operation(
-                       typeOperation = "Магазин",
-                       dateOperation = Date().time,
-                       amount = -325.0,
-                       account = "Тбанк",
-                       tag = "Продукты",
-                       priority = 3,
-                       place = "Пятёрочка43у",
-                       message = "Еженедельные покупки",
-                       id = 7
-                   ) )
+                  // val success = sheetsHelper.updateRowById(resources.getString(R.string.google_sheet_id), resources.getInteger(R.integer.google_sheet_id_page).toLong(), 7, Operation(
+                   val success = sheetsHelper.deleteRowById(resources.getString(R.string.google_sheet_id), resources.getInteger(R.integer.google_sheet_id_page).toLong(), 24)
+
                     //val success = sheetsHelper.getRowById(resources.getString(R.string.google_sheet_id), resources.getInteger(R.integer.google_sheet_id_page).toLong(), 7 )
 //                    val success = sheetsHelper.getRowById(
 //                        resources.getString(R.string.google_sheet_id),
