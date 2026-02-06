@@ -38,6 +38,7 @@ import com.vladgad.tablebudgeter.google.GoogleSignInUtils.Companion.requestSheet
 import com.vladgad.tablebudgeter.model.data.Operation
 import com.vladgad.tablebudgeter.model.data.OperationStatus
 import com.vladgad.tablebudgeter.model.room.BudgeterDataBaseRepository
+import com.vladgad.tablebudgeter.model.table.GoogleSheetsDatabaseRepository
 import com.vladgad.tablebudgeter.model.table.SheetsServiceHelper
 import com.vladgad.tablebudgeter.ui.theme.TableBudgeterTheme
 import kotlinx.coroutines.launch
@@ -49,11 +50,7 @@ import kotlin.text.toLong
 import kotlin.time.Clock.System.now
 
 class MainActivity : ComponentActivity() {
-
-    private val spreadsheetId = resources.getString(R.string.google_sheet_id)
-    private val sheetId = resources.getInteger(R.integer.google_sheet_id_page).toLong()
-
-    private val sheetsHelper: SheetsServiceHelper = SheetsServiceHelper()
+    private val sheetsHelper: GoogleSheetsDatabaseRepository = GoogleSheetsDatabaseRepository()
     private lateinit var startAuthorizationIntent: ActivityResultLauncher<IntentSenderRequest>
     private fun onSuccess(authorizationResult: AuthorizationResult) {
         Toast.makeText(
@@ -61,7 +58,7 @@ class MainActivity : ComponentActivity() {
             "Доступ к Google Sheets получен successful",
             Toast.LENGTH_LONG
         ).show()
-        sheetsHelper.updateAccessToken(authorizationResult.accessToken)
+        sheetsHelper.updateAccessToken(authorizationResult.accessToken!!)
     }
 
     private var pendingAction: (() -> Unit)? = null
@@ -109,6 +106,11 @@ class MainActivity : ComponentActivity() {
             } else
                 Toast.makeText(context, "Аутентификация не прошла", Toast.LENGTH_LONG)
         }
+
+        sheetsHelper.setId(
+            resources.getString(R.string.google_sheet_id),
+            resources.getInteger(R.integer.google_sheet_id_page).toLong()
+        )
     }
 
     @Composable
@@ -118,57 +120,58 @@ class MainActivity : ComponentActivity() {
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
 
+
             Button(onClick = {
                 lifecycleScope.launch {
-
-                    //val success = sheetsHelper.addDataRows(resources.getString(R.string.google_sheet_id), resources.getInteger(R.integer.google_sheet_id_page).toLong(), 1, generateTestOperations() )
-                   //val success = sheetsHelper.updateRowById(resources.getString(R.string.google_sheet_id), resources.getInteger(R.integer.google_sheet_id_page).toLong(), 7, generateTestOperations2() )
-                  // val success = sheetsHelper.updateRowById(resources.getString(R.string.google_sheet_id), resources.getInteger(R.integer.google_sheet_id_page).toLong(), 7, Operation(
-                   val success = sheetsHelper.deleteRowById(resources.getString(R.string.google_sheet_id), resources.getInteger(R.integer.google_sheet_id_page).toLong(), 24)
-
-                    //val success = sheetsHelper.getRowById(resources.getString(R.string.google_sheet_id), resources.getInteger(R.integer.google_sheet_id_page).toLong(), 7 )
-//                    val success = sheetsHelper.getRowById(
-//                        resources.getString(R.string.google_sheet_id),
-//                        resources.getInteger(R.integer.google_sheet_id_page).toLong(),
-//                        7
-//                    )
-//                    runOnUiThread {
-//                        if (success) {
-//                            Toast.makeText(
-//                                this@MainActivity,
-//                                "Заголовки добавлены", Toast.LENGTH_SHORT
-//                            ).show()
-//                        } else {
-//                            Toast.makeText(
-//                                this@MainActivity,
-//                                "Ошибка добавления заголовков", Toast.LENGTH_SHORT
-//                            ).show()
-//                        }
-//                    }
-
-                    //                    val success = sheetsHelper.writeHeaderRowBySheetId(
-//                        "1q3EVetq4BIz0KtUWXABVmuPC3xtBVdna1UqdnLwlgqE",
-//                        resources.getInteger(R.integer.google_sheet_id_page).toLong(),
-//                    ) // Записать, например, на 1
-//                    runOnUiThread {
-//                        if (success) {
-//                            Toast.makeText(
-//                                this@MainActivity,
-//                                "Заголовки добавлены", Toast.LENGTH_SHORT
-//                            ).show()
-//                        } else {
-//                            Toast.makeText(
-//                                this@MainActivity,
-//                                "Ошибка добавления заголовков", Toast.LENGTH_SHORT
-//                            ).show()
-//                        }
-//                    }
-
+                    val success = sheetsHelper.insertOperation(generateTestOperations2()[0])
+                    val x = 1
                 }
             }) {
-                Text(text = "addNewExpenseу")
+                Text(text = "Insert")
             }
 
+            Button(onClick = {
+                lifecycleScope.launch {
+                    val success = sheetsHelper.insertOperations(generateTestOperations())
+                    val x = 1
+                }
+            }) {
+                Text(text = "Insert new ")
+            }
+
+            Button(onClick = {
+                lifecycleScope.launch {
+                    val success = sheetsHelper.getOperation(3)
+                    val x = 1
+                }
+            }) {
+                Text(text = "get row")
+            }
+            Button(onClick = {
+                lifecycleScope.launch {
+                    val success = sheetsHelper.getAllOperations()
+                    val x = 1
+                }
+            }) {
+                Text(text = "get all rows")
+            }
+            Button(onClick = {
+                lifecycleScope.launch {
+                    val success = sheetsHelper.updateOperation(7, generateTestOperations2()[0])
+                    val x = 1
+                }
+            }) {
+                Text(text = "update")
+            }
+
+            Button(onClick = {
+                lifecycleScope.launch {
+                    val success = sheetsHelper.deleteOperation(24)
+                    val x = 1
+                }
+            }) {
+                Text(text = "delte")
+            }
         }
     }
 

@@ -5,10 +5,21 @@ import com.vladgad.tablebudgeter.model.data.Operation
 import com.vladgad.tablebudgeter.model.data.OperationStatus
 import com.vladgad.tablebudgeter.model.room.OperationExtensions.Companion.toEntity
 
-class GoogleSheetsDatabaseRepository(private val spreadsheetId : String, private val sheetId: Long ): BaseOperationRepository() {
+class GoogleSheetsDatabaseRepository( ): BaseOperationRepository() {
 
+    private lateinit var  spreadsheetId : String
+    private var sheetId: Long = -1
+
+    fun setId(spreadsheetId : String,sheetId: Long ){
+        this.spreadsheetId = spreadsheetId
+        this.sheetId = sheetId
+    }
     private val database: SheetsServiceHelper by lazy {
         SheetsServiceHelper.getInstance()
+    }
+
+    fun updateAccessToken(token : String){
+        database.updateAccessToken(token)
     }
     override suspend fun insertOperation(operation: Operation): OperationStatus {
         return try {
