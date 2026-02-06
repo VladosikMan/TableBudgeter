@@ -285,7 +285,8 @@ class SheetsServiceHelper() {
                 operation.tag,
                 operation.priority,
                 operation.place,
-                operation.message
+                operation.message,
+                operation.id
                 // Можно добавить operation.id если нужно
             )
         }

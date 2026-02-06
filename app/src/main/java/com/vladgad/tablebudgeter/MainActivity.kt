@@ -13,16 +13,30 @@ import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.coroutineScope
@@ -37,6 +51,7 @@ import com.vladgad.tablebudgeter.google.GoogleSignInUtils.Companion.handleAuthor
 import com.vladgad.tablebudgeter.google.GoogleSignInUtils.Companion.requestSheetsAuthorization
 import com.vladgad.tablebudgeter.model.data.Operation
 import com.vladgad.tablebudgeter.model.data.OperationStatus
+import com.vladgad.tablebudgeter.model.data.OperationStatus.Success
 import com.vladgad.tablebudgeter.model.room.BudgeterDataBaseRepository
 import com.vladgad.tablebudgeter.model.table.GoogleSheetsDatabaseRepository
 import com.vladgad.tablebudgeter.model.table.SheetsServiceHelper
@@ -117,61 +132,8 @@ class MainActivity : ComponentActivity() {
     fun DatabaseTestButtonsScreen() {
         Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-
-
-            Button(onClick = {
-                lifecycleScope.launch {
-                    val success = sheetsHelper.insertOperation(generateTestOperations2()[0])
-                    val x = 1
-                }
-            }) {
-                Text(text = "Insert")
-            }
-
-            Button(onClick = {
-                lifecycleScope.launch {
-                    val success = sheetsHelper.insertOperations(generateTestOperations())
-                    val x = 1
-                }
-            }) {
-                Text(text = "Insert new ")
-            }
-
-            Button(onClick = {
-                lifecycleScope.launch {
-                    val success = sheetsHelper.getOperation(3)
-                    val x = 1
-                }
-            }) {
-                Text(text = "get row")
-            }
-            Button(onClick = {
-                lifecycleScope.launch {
-                    val success = sheetsHelper.getAllOperations()
-                    val x = 1
-                }
-            }) {
-                Text(text = "get all rows")
-            }
-            Button(onClick = {
-                lifecycleScope.launch {
-                    val success = sheetsHelper.updateOperation(7, generateTestOperations2()[0])
-                    val x = 1
-                }
-            }) {
-                Text(text = "update")
-            }
-
-            Button(onClick = {
-                lifecycleScope.launch {
-                    val success = sheetsHelper.deleteOperation(24)
-                    val x = 1
-                }
-            }) {
-                Text(text = "delte")
-            }
+            SimpleForm()
         }
     }
 
@@ -184,137 +146,128 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    fun generateTestOperations(): List<Operation> {
-        val now = System.currentTimeMillis()
-        val oneDay = 24 * 60 * 60 * 1000L
+    @Composable
+    fun SimpleForm() {
+        var action by remember { mutableStateOf("") }
+        var amount by remember { mutableStateOf("") }
+        var selectedPlace by remember { mutableStateOf("Сбербанк") }
+        var loading by remember { mutableStateOf(false) }
+        var message by remember { mutableStateOf("") }
 
-        return listOf(
-            // Расходы
-            Operation(
-                typeOperation = "Расход",
-                dateOperation = now - (5 * oneDay),
-                amount = 1500.0,
-                account = "Сбербанк",
-                tag = "Продукты",
-                priority = 3,
-                place = "Пятёрочка",
-                message = "Еженедельные покупки"
-            ),
-            Operation(
-                typeOperation = "Расход",
-                dateOperation = now - (4 * oneDay),
-                amount = 800.0,
-                account = "Тинькофф",
-                tag = "Кафе",
-                priority = 2,
-                place = "Starbucks",
-                message = "Кофе с коллегами"
-            ),
-            Operation(
-                typeOperation = "Расход",
-                dateOperation = now - (3 * oneDay),
-                amount = 2500.0,
-                account = "Альфа-Банк",
-                tag = "Транспорт",
-                priority = 1,
-                place = "Яндекс.Такси",
-                message = "Поездка в аэропорт"
-            ),
-            Operation(
-                typeOperation = "Расход",
-                dateOperation = now - (2 * oneDay),
-                amount = 3200.0,
-                account = "Сбербанк",
-                tag = "Развлечения",
-                priority = 4,
-                place = "Кинотеатр",
-                message = "Билеты в кино"
-            ),
-            Operation(
-                typeOperation = "Расход",
-                dateOperation = now - oneDay,
-                amount = 450.0,
-                account = "Наличные",
-                tag = "Транспорт",
-                priority = 3,
-                place = "Метро",
-                message = "Пополнение транспортной карты"
-            ),
+        val places = listOf("Сбербанк", "ВТБ", "Тбанк", "Наличка")
+        val scope = rememberCoroutineScope()
 
-            // Доходы
-            Operation(
-                typeOperation = "Доход",
-                dateOperation = now - (6 * oneDay),
-                amount = 75000.0,
-                account = "Сбербанк",
-                tag = "Зарплата",
-                priority = 5,
-                place = "Работа",
-                message = "Ежемесячная зарплата"
-            ),
-            Operation(
-                typeOperation = "Доход",
-                dateOperation = now - (3 * oneDay),
-                amount = 15000.0,
-                account = "Тинькофф",
-                tag = "Фриланс",
-                priority = 4,
-                place = "Дом",
-                message = "Оплата за проект"
-            ),
-            Operation(
-                typeOperation = "Доход",
-                dateOperation = now - oneDay,
-                amount = 5000.0,
-                account = "Сбербанк",
-                tag = "Кэшбэк",
-                priority = 3,
-                place = "Банк",
-                message = "Кэшбэк за покупки"
-            ),
-
-            // Переводы
-            Operation(
-                typeOperation = "Перевод",
-                dateOperation = now - (2 * oneDay),
-                amount = 10000.0,
-                account = "Сбербанк → Тинькофф",
-                tag = "Накопительный счёт",
-                priority = 3,
-                place = "Мобильный банк",
-                message = "Ежемесячные накопления"
-            ),
-            Operation(
-                typeOperation = "Перевод",
-                dateOperation = now - oneDay,
-                amount = 5000.0,
-                account = "Тинькофф → Альфа-Банк",
-                tag = "Кредит",
-                priority = 1,
-                place = "Банк",
-                message = "Погашение кредита"
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.Center
+        ) {
+            // Поле ввода действия
+            OutlinedTextField(
+                value = action,
+                onValueChange = { action = it },
+                label = { Text("Действие") },
+                modifier = Modifier.fillMaxWidth()
             )
-        )
-    }
 
-    fun generateTestOperations2(): List<Operation> {
-        val now = System.currentTimeMillis()
-        val oneDay = 24 * 60 * 60 * 1000L
+            Spacer(modifier = Modifier.height(8.dp))
 
-        return listOf(
-            // Расходы
-            Operation(
-                typeOperation = "Магазин",
-                dateOperation = now - (5 * oneDay),
-                amount = -325.0,
-                account = "Тбанк",
-                tag = "Продукты",
-                priority = 3,
-                place = "Пятёрочка",
-                message = "Еженедельные покупки",
-                id = 7
-            ),
-        )
+            // Поле ввода суммы
+            OutlinedTextField(
+                value = amount,
+                onValueChange = { amount = it },
+                label = { Text("Сумма") },
+                modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = KeyboardOptions.Default.copy(
+                    keyboardType = KeyboardType.Number
+                )
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Простой выбор места через Row с кнопками
+            Text("Источник:", modifier = Modifier.padding(bottom = 4.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+
+                ) {
+                places.forEach { place ->
+                    FilterChip(
+                        selected = selectedPlace == place,
+                        onClick = { selectedPlace = place },
+                        label = { Text(place) }
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Кнопка
+            Button(
+                onClick = {
+                    if (action.isBlank() || amount.isBlank()) {
+                        message = "Заполните все поля"
+                        return@Button
+                    }
+
+                    loading = true
+                    message = "Добавляем..."
+
+                    scope.launch {
+                        try {
+                            val success = sheetsHelper.insertOperation(
+                                Operation(
+                                    typeOperation = action,
+                                    dateOperation = Date().time,
+                                    amount = amount.toDouble(),
+                                    account = selectedPlace,
+                                    id = Date().time
+                                )
+                            ) as Success
+
+                            message = if (success.id == 1.0.toLong()) {
+                                "✅ Добавлено"
+
+                            } else {
+                                "❌ Ошибка вставки строки"
+                            }
+                        } catch (e: Exception) {
+                            message = "❌ Ошибка: ${e.message}"
+                        } finally {
+                            loading = false
+                        }
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                enabled = !loading
+            ) {
+                if (loading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text("Добавить запись")
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Сообщение о статусе
+            if (message.isNotEmpty()) {
+                Text(
+                    text = message,
+                    color = when {
+                        message.startsWith("✅") -> MaterialTheme.colorScheme.primary
+                        message.startsWith("❌") -> MaterialTheme.colorScheme.error
+                        else -> MaterialTheme.colorScheme.onSurface
+                    }
+                )
+            }
+        }
     }
 }
 
