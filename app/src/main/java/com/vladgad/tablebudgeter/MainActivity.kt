@@ -46,6 +46,7 @@ import java.util.Date
 import java.util.Locale
 import kotlin.random.Random
 import kotlin.text.toLong
+import kotlin.time.Clock.System.now
 
 class MainActivity : ComponentActivity() {
 
@@ -118,11 +119,25 @@ class MainActivity : ComponentActivity() {
                 lifecycleScope.launch {
 
                     //val success = sheetsHelper.addDataRows(resources.getString(R.string.google_sheet_id), resources.getInteger(R.integer.google_sheet_id_page).toLong(), 1, generateTestOperations() )
-                    val success = sheetsHelper.getAllRows(
-                        resources.getString(R.string.google_sheet_id),
-                        resources.getInteger(R.integer.google_sheet_id_page).toLong()
-                    )
-                    runOnUiThread {
+                   //val success = sheetsHelper.updateRowById(resources.getString(R.string.google_sheet_id), resources.getInteger(R.integer.google_sheet_id_page).toLong(), 7, generateTestOperations2() )
+                   val success = sheetsHelper.updateRowById(resources.getString(R.string.google_sheet_id), resources.getInteger(R.integer.google_sheet_id_page).toLong(), 7, Operation(
+                       typeOperation = "Магазин",
+                       dateOperation = Date().time,
+                       amount = -325.0,
+                       account = "Тбанк",
+                       tag = "Продукты",
+                       priority = 3,
+                       place = "Пятёрочка43у",
+                       message = "Еженедельные покупки",
+                       id = 7
+                   ) )
+                    //val success = sheetsHelper.getRowById(resources.getString(R.string.google_sheet_id), resources.getInteger(R.integer.google_sheet_id_page).toLong(), 7 )
+//                    val success = sheetsHelper.getRowById(
+//                        resources.getString(R.string.google_sheet_id),
+//                        resources.getInteger(R.integer.google_sheet_id_page).toLong(),
+//                        7
+//                    )
+//                    runOnUiThread {
 //                        if (success) {
 //                            Toast.makeText(
 //                                this@MainActivity,
@@ -134,7 +149,7 @@ class MainActivity : ComponentActivity() {
 //                                "Ошибка добавления заголовков", Toast.LENGTH_SHORT
 //                            ).show()
 //                        }
-                    }
+//                    }
 
                     //                    val success = sheetsHelper.writeHeaderRowBySheetId(
 //                        "1q3EVetq4BIz0KtUWXABVmuPC3xtBVdna1UqdnLwlgqE",
@@ -281,6 +296,26 @@ class MainActivity : ComponentActivity() {
                 place = "Банк",
                 message = "Погашение кредита"
             )
+        )
+    }
+
+    fun generateTestOperations2(): List<Operation> {
+        val now = System.currentTimeMillis()
+        val oneDay = 24 * 60 * 60 * 1000L
+
+        return listOf(
+            // Расходы
+            Operation(
+                typeOperation = "Магазин",
+                dateOperation = now - (5 * oneDay),
+                amount = -325.0,
+                account = "Тбанк",
+                tag = "Продукты",
+                priority = 3,
+                place = "Пятёрочка",
+                message = "Еженедельные покупки",
+                id = 7
+            ),
         )
     }
 }

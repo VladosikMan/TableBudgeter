@@ -281,4 +281,17 @@ object SheetRequestBuilder {
         )
     }
 
+    // Data класс для запроса обновления
+    data class UpdateRowRequest(
+        @SerializedName("range")
+        val range: String,
+
+        @SerializedName("values")
+        val values: List<List<Any>>,
+
+        @SerializedName("majorDimension")
+        val majorDimension: String = "ROWS"
+    )
+
+
 }

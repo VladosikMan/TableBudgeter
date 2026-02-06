@@ -8,8 +8,8 @@ data class Operation(
     val amount: Double,
     val account: String,
     val id: Long = Date().time,
-    val tag: String = "",
     val priority: Int = 3,
+    val tag: String = "",
     val place: String = "",
     val message: String = ""
 ) {

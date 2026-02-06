@@ -10,7 +10,7 @@ import com.vladgad.tablebudgeter.model.data.OperationList
 import com.vladgad.tablebudgeter.model.data.parseListOperation
 import com.vladgad.tablebudgeter.model.table.SheetRequestBuilder.createHeadersRequest
 import com.vladgad.tablebudgeter.model.table.SheetRequestBuilder.createInsertAndUpdateRowsRequest
-import com.vladgad.tablebudgeter.model.table.SheetRequestBuilder.createInsertEmptyRowRequest
+import com.vladgad.tablebudgeter.model.table.SheetRequestBuilder.createInsertEmptyRowRequestimport com.vladgad.tablebudgeter.model.table.SheetRequestBuilder.createUpdateRowsRequest
 import com.vladgad.tablebudgeter.utils.GsonClient.Companion.getInstanceGson
 import com.vladgad.tablebudgeter.utils.Utils.Companion.formatDate
 import io.ktor.client.*
@@ -22,6 +22,9 @@ import io.ktor.http.*
 import io.ktor.serialization.gson.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class SheetsServiceHelper(private var accessToken: String?) {
     private val headers =
@@ -256,9 +259,7 @@ class SheetsServiceHelper(private var accessToken: String?) {
         startRowIndex: Int,
         operations: List<Operation>
     ): Boolean = withContext(Dispatchers.IO) {
-
         val url = "https://sheets.googleapis.com/v4/spreadsheets/$spreadsheetId:batchUpdate"
-
         val token = accessToken ?: return@withContext false
         // 1. Преобразуем операции в строки таблицы
         val dataRows = operations.map { operation ->
@@ -274,8 +275,6 @@ class SheetsServiceHelper(private var accessToken: String?) {
                 // Можно добавить operation.id если нужно
             )
         }
-
-
         val requestBody = gson.toJson(
             createInsertAndUpdateRowsRequest(
                 sheetId = sheetId,
@@ -303,27 +302,20 @@ class SheetsServiceHelper(private var accessToken: String?) {
         includeEmptyRows: Boolean = false
     ): List<Operation> = withContext(Dispatchers.IO) {
         val token = accessToken ?: throw IllegalStateException("No access token")
-
         // 1. Определяем название листа (sheet name)
         val targetSheetName = getSheetNameById(spreadsheetId, sheetId, token)
-
-
         // 2. Формируем URL для запроса
         val range = escapeSheetName(targetSheetName) // Экранируем название листа
         val url = "https://sheets.googleapis.com/v4/spreadsheets/$spreadsheetId/values/$range"
-
         // 3. Выполняем запрос
         val response = client.get(url) {
             header("Authorization", "Bearer $token")
             contentType(ContentType.Application.Json)
         }
-
         if (!response.status.isSuccess()) {
             val errorBody = response.bodyAsText()
             throw RuntimeException("Failed to get rows: ${response.status}. Error: $errorBody")
         }
-
-
         val json = gson.fromJson(response.bodyAsText(), ValueRange::class.java)
         // 5. Преобразуем данные
         val allRows = json.values?.map { row ->
@@ -349,6 +341,148 @@ class SheetsServiceHelper(private var accessToken: String?) {
         val list = parseListOperation(allRows)
 
         return@withContext list
+    }
+
+    suspend fun getNumRowById(
+        spreadsheetId: String,
+        sheetName: String,
+        id: Long,
+        idColumnIndex: Int = 8 // В какой колонке искать ID (по умолчанию A, индекс 0)
+    ): Int = withContext(Dispatchers.IO) {
+
+        val token = accessToken ?: throw IllegalStateException("No access token")
+        // 1. Получаем все ID из указанной колонки
+        val idRange =
+            "${sheetName}!${getColumnLetter(idColumnIndex + 1)}:${getColumnLetter(idColumnIndex + 1)}"
+        val url = "https://sheets.googleapis.com/v4/spreadsheets/$spreadsheetId/values/$idRange"
+
+        val response = client.get(url) {
+            header("Authorization", "Bearer $token")
+            contentType(ContentType.Application.Json)
+        }
+
+        if (!response.status.isSuccess()) {
+            throw RuntimeException("Failed to get IDs: ${response.status}")
+        }
+        val valueRange = gson.fromJson(response.bodyAsText(), ValueRange::class.java)
+        val idColumn = valueRange.values?.flatten() ?: emptyList()
+        // 2. Ищем строку с нужным ID
+        val rowIndex = findRowIndexById(idColumn, id)
+        return@withContext rowIndex
+    }
+
+    suspend fun getRowById(
+        spreadsheetId: String,
+        sheetId: Long,
+        id: Long,
+    ): Operation = withContext(Dispatchers.IO) {
+        val token = accessToken ?: throw IllegalStateException("No access token")
+        val sheetName = getSheetNameById(spreadsheetId, sheetId, token)
+        val rowIndex = getNumRowById(spreadsheetId, sheetName, id)
+        val row = getRowByIndex(spreadsheetId, sheetName, rowIndex, token)
+        val list = parseListOperation(listOf(row))
+        return@withContext list[0]
+    }
+
+
+
+    // Получение строки по индексу
+    private suspend fun getRowByIndex(
+        spreadsheetId: String,
+        sheetName: String,
+        rowIndex: Int, // 0-based индекс строки
+        token: String
+    ): List<String> {
+        // Получаем достаточно большое количество колонок (например, до Z)
+        val columnCount = 26 // A-Z
+        val startColumn = "A"
+        val endColumn = getColumnLetter(columnCount)
+
+        // Диапазон: одна строка, все колонки
+        val range = "${sheetName}!${startColumn}${rowIndex + 1}:${endColumn}${rowIndex + 1}"
+        val url = "https://sheets.googleapis.com/v4/spreadsheets/$spreadsheetId/values/$range"
+
+        val response = client.get(url) {
+            header("Authorization", "Bearer $token")
+            contentType(ContentType.Application.Json)
+        }
+
+        if (!response.status.isSuccess()) {
+            throw RuntimeException("Failed to get row: ${response.status}")
+        }
+
+        val valueRange = gson.fromJson(response.bodyAsText(), ValueRange::class.java)
+        return valueRange.values?.firstOrNull()?.map { it.toString() } ?: emptyList()
+    }
+
+
+    suspend fun updateRowById(
+        spreadsheetId: String,
+        sheetId: Long,
+        id: Long, operation:Operation,
+        startColumn: Int = 0 // С какой колонки начинать обновление
+    ): Boolean = withContext(Dispatchers.IO) {
+        val token = accessToken ?: throw IllegalStateException("No access token")
+        val sheetName = getSheetNameById(spreadsheetId, sheetId, token)
+        val rowIndex = getNumRowById(spreadsheetId, sheetName, id)
+        val url = "https://sheets.googleapis.com/v4/spreadsheets/$spreadsheetId:batchUpdate"
+        // 2. Создаем значения строки
+        val rowValues = listOf(
+            operation.typeOperation,
+            formatDate(operation.dateOperation),
+            operation.amount,
+            operation.account,
+            operation.priority,
+            operation.tag,
+            operation.place,
+            operation.message,
+            operation.id
+        )
+        // 3. Преобразуем значения в RowData
+        val rowData = RowData(
+            values = rowValues.map { value ->
+                CellData(
+                    userEnteredValue = when (value) {
+                        is String -> ExtendedValue(stringValue = value)
+                        is Int -> ExtendedValue(numberValue = value.toDouble())
+                        is Double -> ExtendedValue(numberValue = value)
+                        is Float -> ExtendedValue(numberValue = value.toDouble())
+                        is Boolean -> ExtendedValue(boolValue = value)
+                        else -> ExtendedValue(stringValue = value.toString())
+                    }
+                )
+            }
+        )
+        val request = BatchUpdateRequest(
+            requests = listOf(
+                SheetRequest.UpdateCells(
+                    updateCells = UpdateCellsRequest(
+                        range = GridRange(
+                            sheetId = sheetId,
+                            startRowIndex = rowIndex,
+                            endRowIndex = rowIndex + 1,
+                            startColumnIndex = startColumn,
+                            endColumnIndex = startColumn + rowValues.size
+                        ),
+                        fields = "userEnteredValue",
+                        rows =  listOf(rowData)
+                    )
+                )
+            )
+        )
+        return@withContext try {
+            val response: HttpResponse = client.post(url) {
+                header("Authorization", "Bearer $token")
+                header("Content-Type", "application/json")
+                setBody(gson.toJson(request))
+            }
+            response.status.isSuccess()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+
+
     }
 
     suspend fun close() {
@@ -407,6 +541,44 @@ class SheetsServiceHelper(private var accessToken: String?) {
 
 
     }
+
+    // Преобразование номера колонки в букву (1->A, 2->B, ..., 27->AA)
+    private fun getColumnLetter(columnNumber: Int): String {
+        var temp = columnNumber
+        var letter = ""
+
+        while (temp > 0) {
+            val modulo = (temp - 1) % 26
+            letter = ('A'.code + modulo).toChar() + letter
+            temp = (temp - modulo) / 26
+        }
+
+        return letter
+    }
+
+    // Поиск индекса строки по ID
+    private fun findRowIndexById(idColumn: List<Any>, targetId: Long): Int {
+        // Пропускаем заголовок (если он есть) и ищем ID
+        for (i in idColumn.indices) {
+            val cellValue = idColumn[i]
+            when (cellValue) {
+                is String -> {
+                    val id = cellValue.toLongOrNull()
+                    if (id == targetId) {
+                        return i // Возвращаем индекс строки (0-based)
+                    }
+                }
+
+                is Number -> {
+                    if (cellValue.toLong() == targetId) {
+                        return i
+                    }
+                }
+            }
+        }
+        return -1 // Не найдено
+    }
+
 }
 
 
