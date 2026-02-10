@@ -28,18 +28,19 @@ import java.util.Date
 import java.util.Locale
 
 class SheetsServiceHelper() {
-    companion object{
+    companion object {
         @Volatile
-        private  var INSTANCE: SheetsServiceHelper? = null
+        private var INSTANCE: SheetsServiceHelper? = null
 
-        fun getInstance(): SheetsServiceHelper{
-            return  INSTANCE?: synchronized(this){
+        fun getInstance(): SheetsServiceHelper {
+            return INSTANCE ?: synchronized(this) {
                 val client = SheetsServiceHelper()
                 INSTANCE = client
                 client
             }
         }
     }
+
     private var accessToken: String? = null
     private val headers =
         listOf("Действие", "Дата", "Сумма", "Счёт", "Приоритет", "Тэг", "Место", "Сообщение", "Id")
@@ -272,7 +273,7 @@ class SheetsServiceHelper() {
         sheetId: Long, // Используем sheetId
         startRowIndex: Int,
         operations: List<Operation>
-    ): Long = withContext(Dispatchers.IO) {
+    ): Boolean = withContext(Dispatchers.IO) {
         val url = "https://sheets.googleapis.com/v4/spreadsheets/$spreadsheetId:batchUpdate"
         val token = accessToken ?: return@withContext -1
         // 1. Преобразуем операции в строки таблицы
@@ -304,13 +305,13 @@ class SheetsServiceHelper() {
                 header("Content-Type", "application/json")
                 setBody(requestBody)
             }
-            if(response.status.isSuccess())
-                return@withContext  1
+            if (response.status.isSuccess())
+                return@withContext true
             else
-                return@withContext -1
+                return@withContext false
         } catch (e: Exception) {
             e.printStackTrace()
-            - 1
+            false
         }
     }
 
@@ -403,7 +404,6 @@ class SheetsServiceHelper() {
     }
 
 
-
     // Получение строки по индексу
     private suspend fun getRowByIndex(
         spreadsheetId: String,
@@ -437,7 +437,7 @@ class SheetsServiceHelper() {
     suspend fun updateRowById(
         spreadsheetId: String,
         sheetId: Long,
-        id: Long, operation:Operation,
+        id: Long, operation: Operation,
         startColumn: Int = 0 // С какой колонки начинать обновление
     ): Boolean = withContext(Dispatchers.IO) {
         val token = accessToken ?: throw IllegalStateException("No access token")
@@ -483,7 +483,7 @@ class SheetsServiceHelper() {
                             endColumnIndex = startColumn + rowValues.size
                         ),
                         fields = "userEnteredValue",
-                        rows =  listOf(rowData)
+                        rows = listOf(rowData)
                     )
                 )
             )
@@ -531,11 +531,12 @@ class SheetsServiceHelper() {
 
         // 2. Отправляем запрос
         return@withContext try {
-            val response = client.post("https://sheets.googleapis.com/v4/spreadsheets/$spreadsheetId:batchUpdate") {
-                header("Authorization", "Bearer $token")
-                contentType(ContentType.Application.Json)
-                setBody(gson.toJson(request))
-            }
+            val response =
+                client.post("https://sheets.googleapis.com/v4/spreadsheets/$spreadsheetId:batchUpdate") {
+                    header("Authorization", "Bearer $token")
+                    contentType(ContentType.Application.Json)
+                    setBody(gson.toJson(request))
+                }
             response.status.isSuccess()
         } catch (e: Exception) {
             e.printStackTrace()
@@ -543,6 +544,7 @@ class SheetsServiceHelper() {
         }
 
     }
+
     suspend fun close() {
         client.close()
     }
