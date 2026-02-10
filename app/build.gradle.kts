@@ -106,4 +106,20 @@ dependencies {
     // Для работы с Gson в Ktor
     implementation(libs.ktor.client.content.negotiation)
     implementation(libs.ktor.serialization.gson)
+
+    //viewmodel
+
+    // ViewModel for Activities/Fragments
+    implementation(libs.lifecycle.viewmodel.ktx)
+
+    // For Jetpack Compose projects
+    implementation(libs.lifecycle.viewmodel.compose)
+
+    // Optional: LiveData if you use it
+    implementation(libs.lifecycle.livedata.ktx)
+    // Saved state module for ViewModel
+    implementation(libs.androidx.lifecycle.viewmodel.savedstate)
+
+    // ViewModel integration with Navigation3
+    implementation(libs.androidx.lifecycle.viewmodel.navigation3)
 }
