@@ -1,15 +1,14 @@
 package com.vladgad.tablebudgeter.model.room
 
-import android.content.Context
 import com.vladgad.tablebudgeter.model.OperationRepository
 import com.vladgad.tablebudgeter.model.data.Operation
 import com.vladgad.tablebudgeter.model.data.OperationStatus
 import com.vladgad.tablebudgeter.model.room.OperationExtensions.Companion.toDomain
 import com.vladgad.tablebudgeter.model.room.OperationExtensions.Companion.toEntity
 
-class BudgeterDataBaseRepository(private val context: Context) : OperationRepository {
+class BudgeterDataBaseRepository() : OperationRepository {
     private val database: BudgeterDataBase by lazy {
-        BudgeterDataBase.getInstance(context.applicationContext)
+        BudgeterDataBase.getInstance()
     }
 
     private val operationDao: OperationDAO by lazy {
