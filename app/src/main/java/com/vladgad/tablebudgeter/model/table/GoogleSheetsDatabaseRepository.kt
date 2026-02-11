@@ -1,10 +1,10 @@
 package com.vladgad.tablebudgeter.model.table
 
-import com.vladgad.tablebudgeter.model.BaseOperationRepository
+import com.vladgad.tablebudgeter.model.OperationRepository
 import com.vladgad.tablebudgeter.model.data.Operation
 import com.vladgad.tablebudgeter.model.data.OperationStatus
 
-class GoogleSheetsDatabaseRepository() : BaseOperationRepository() {
+class GoogleSheetsDatabaseRepository() : OperationRepository {
 
     private lateinit var spreadsheetId: String
     private var sheetId: Long = -1
@@ -87,5 +87,17 @@ class GoogleSheetsDatabaseRepository() : BaseOperationRepository() {
         } catch (e: Exception) {
             OperationStatus.Error(e.message ?: "Insert failed")
         }
+    }
+
+    override suspend fun getOperationsCount(): Int {
+        return 1
+    }
+
+    override suspend fun getTotalAmount(): Double {
+        return 1.0
+    }
+
+    override suspend fun isOperationExists(id: Long): Boolean {
+        return true
     }
 }

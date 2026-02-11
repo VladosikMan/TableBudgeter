@@ -1,13 +1,13 @@
 package com.vladgad.tablebudgeter.model.room
 
 import android.content.Context
-import com.vladgad.tablebudgeter.model.BaseOperationRepository
+import com.vladgad.tablebudgeter.model.OperationRepository
 import com.vladgad.tablebudgeter.model.data.Operation
 import com.vladgad.tablebudgeter.model.data.OperationStatus
 import com.vladgad.tablebudgeter.model.room.OperationExtensions.Companion.toDomain
 import com.vladgad.tablebudgeter.model.room.OperationExtensions.Companion.toEntity
 
-class BudgeterDataBaseRepository(private val context: Context) : BaseOperationRepository() {
+class BudgeterDataBaseRepository(private val context: Context) : OperationRepository {
     private val database: BudgeterDataBase by lazy {
         BudgeterDataBase.getInstance(context.applicationContext)
     }
@@ -98,5 +98,17 @@ class BudgeterDataBaseRepository(private val context: Context) : BaseOperationRe
         } catch (e: Exception) {
             OperationStatus.Error("Ошибка удаления: ${e.message ?: "unknown error"}")
         }
+    }
+
+    override suspend fun getOperationsCount(): Int {
+        return 1
+    }
+
+    override suspend fun getTotalAmount(): Double {
+        return 1.0
+    }
+
+    override suspend fun isOperationExists(id: Long): Boolean {
+        return false
     }
 }
