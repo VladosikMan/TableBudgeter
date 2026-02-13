@@ -18,6 +18,3 @@ data class Operation(
     }
 }
 
-data class OperationList(
-    val operationList: List<Operation>
-)

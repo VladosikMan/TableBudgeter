@@ -1,15 +1,14 @@
 package com.vladgad.tablebudgeter.model.room
 
-import android.content.Context
-import com.vladgad.tablebudgeter.model.BaseOperationRepository
+import com.vladgad.tablebudgeter.model.OperationRepository
 import com.vladgad.tablebudgeter.model.data.Operation
 import com.vladgad.tablebudgeter.model.data.OperationStatus
 import com.vladgad.tablebudgeter.model.room.OperationExtensions.Companion.toDomain
 import com.vladgad.tablebudgeter.model.room.OperationExtensions.Companion.toEntity
 
-class BudgeterDataBaseRepository(private val context: Context) : BaseOperationRepository() {
+class BudgeterDataBaseRepository() : OperationRepository {
     private val database: BudgeterDataBase by lazy {
-        BudgeterDataBase.getInstance(context.applicationContext)
+        BudgeterDataBase.getInstance()
     }
 
     private val operationDao: OperationDAO by lazy {
@@ -21,7 +20,10 @@ class BudgeterDataBaseRepository(private val context: Context) : BaseOperationRe
         return try {
             val entity = operation.toEntity() // Предполагается функция-расширение
             val id = operationDao.insertOperation(entity)
-            OperationStatus.Success(id)
+            return if(id>0)
+                OperationStatus.Success(id)
+            else
+                OperationStatus.Error("Error", 0)
         } catch (e: Exception) {
             OperationStatus.Error(e.message ?: "Insert failed")
         }
@@ -77,7 +79,7 @@ class BudgeterDataBaseRepository(private val context: Context) : BaseOperationRe
             val rowsUpdated = operationDao.updateOperation(entity)
 
             if (rowsUpdated > 0) {
-                OperationStatus.SuccessUpdateDelete(rowsUpdated)
+                OperationStatus.Success(rowsUpdated.toLong())
             } else {
                 OperationStatus.Error("Операция не была обновлена")
             }
@@ -91,7 +93,7 @@ class BudgeterDataBaseRepository(private val context: Context) : BaseOperationRe
         return try {
             val rowsDeleted = operationDao.deleteOperationById(id)
             if (rowsDeleted > 0) {
-                OperationStatus.SuccessUpdateDelete(rowsDeleted)
+                OperationStatus.Success(rowsDeleted.toLong())
             } else {
                 OperationStatus.Error("Операция с ID $id не найдена для удаления")
             }
@@ -99,4 +101,16 @@ class BudgeterDataBaseRepository(private val context: Context) : BaseOperationRe
             OperationStatus.Error("Ошибка удаления: ${e.message ?: "unknown error"}")
         }
     }
+
+  /*  override suspend fun getOperationsCount(): Int {
+        return 1
+    }
+
+    override suspend fun getTotalAmount(): Double {
+        return 1.0
+    }
+
+    override suspend fun isOperationExists(id: Long): Boolean {
+        return false
+    }*/
 }
