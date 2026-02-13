@@ -49,7 +49,7 @@ import com.google.android.gms.common.api.Scope
 import com.vladgad.tablebudgeter.google.GoogleSignInUtils
 import com.vladgad.tablebudgeter.google.GoogleSignInUtils.Companion.handleAuthorizationResult
 import com.vladgad.tablebudgeter.google.GoogleSignInUtils.Companion.requestSheetsAuthorization
-import com.vladgad.tablebudgeter.model.Repository
+import com.vladgad.tablebudgeter.Repository
 import com.vladgad.tablebudgeter.model.data.Operation
 import com.vladgad.tablebudgeter.model.data.OperationStatus
 import com.vladgad.tablebudgeter.model.data.OperationStatus.Success

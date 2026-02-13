@@ -88,7 +88,7 @@ class GoogleSheetsDatabaseRepository() : OperationRepository {
             OperationStatus.Error(e.message ?: "Insert failed")
         }
     }
-
+/*
     override suspend fun getOperationsCount(): Int {
         return 1
     }
@@ -99,5 +99,5 @@ class GoogleSheetsDatabaseRepository() : OperationRepository {
 
     override suspend fun isOperationExists(id: Long): Boolean {
         return true
-    }
+    }*/
 }

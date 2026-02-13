@@ -20,7 +20,10 @@ class BudgeterDataBaseRepository() : OperationRepository {
         return try {
             val entity = operation.toEntity() // Предполагается функция-расширение
             val id = operationDao.insertOperation(entity)
-            OperationStatus.Success(id)
+            return if(id>0)
+                OperationStatus.Success(id)
+            else
+                OperationStatus.Error("Error", 0)
         } catch (e: Exception) {
             OperationStatus.Error(e.message ?: "Insert failed")
         }
@@ -76,7 +79,7 @@ class BudgeterDataBaseRepository() : OperationRepository {
             val rowsUpdated = operationDao.updateOperation(entity)
 
             if (rowsUpdated > 0) {
-                OperationStatus.SuccessUpdateDelete(rowsUpdated)
+                OperationStatus.Success(rowsUpdated.toLong())
             } else {
                 OperationStatus.Error("Операция не была обновлена")
             }
@@ -90,7 +93,7 @@ class BudgeterDataBaseRepository() : OperationRepository {
         return try {
             val rowsDeleted = operationDao.deleteOperationById(id)
             if (rowsDeleted > 0) {
-                OperationStatus.SuccessUpdateDelete(rowsDeleted)
+                OperationStatus.Success(rowsDeleted.toLong())
             } else {
                 OperationStatus.Error("Операция с ID $id не найдена для удаления")
             }
@@ -99,7 +102,7 @@ class BudgeterDataBaseRepository() : OperationRepository {
         }
     }
 
-    override suspend fun getOperationsCount(): Int {
+  /*  override suspend fun getOperationsCount(): Int {
         return 1
     }
 
@@ -109,5 +112,5 @@ class BudgeterDataBaseRepository() : OperationRepository {
 
     override suspend fun isOperationExists(id: Long): Boolean {
         return false
-    }
+    }*/
 }

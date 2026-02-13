@@ -1,7 +1,7 @@
 package com.vladgad.tablebudgeter
 
 import com.vladgad.tablebudgeter.model.OperationRepository
-import com.vladgad.tablebudgeter.model.data.InsertStatusOperationEnum
+import com.vladgad.tablebudgeter.model.data.StatusOperationEnum
 import com.vladgad.tablebudgeter.model.data.Operation
 import com.vladgad.tablebudgeter.model.data.OperationStatus
 import com.vladgad.tablebudgeter.model.room.BudgeterDataBaseRepository
@@ -20,7 +20,7 @@ class Repository : OperationRepository {
             return checkStatusInsert(statusRoom, statusGoogle)
         } catch (e: Exception) {
             e.printStackTrace()
-            return OperationStatus.InsertStatus(InsertStatusOperationEnum.FUNC_ERROR.code)
+            return OperationStatus.InsertStatus(StatusOperationEnum.FUNC_ERROR.code)
         }
     }
 
@@ -31,6 +31,7 @@ class Repository : OperationRepository {
     }
 
     override suspend fun getOperation(id: Long): OperationStatus {
+
         googleTableDataBase.getOperation(id)
         return roomDatabase.getOperation(id)
     }
@@ -43,29 +44,41 @@ class Repository : OperationRepository {
     override suspend fun updateOperation(
         id: Long, operation: Operation
     ): OperationStatus {
-        googleTableDataBase.updateOperation(id, operation)
-        roomDatabase.updateOperation(id, operation)
+        try {
+            val statusRoom = googleTableDataBase.updateOperation(id, operation)
+            val statusGoogle = roomDatabase.updateOperation(id, operation)
+            return checkStatusUpdate(statusRoom, statusGoogle, 1)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return OperationStatus.UpdateStatus(StatusOperationEnum.FUNC_ERROR.code, 1)
+        }
     }
 
     override suspend fun deleteOperation(id: Long): OperationStatus {
-        googleTableDataBase.deleteOperation(id)
-        roomDatabase.deleteOperation(id)
+        try {
+            val statusRoom = googleTableDataBase.deleteOperation(id)
+            val statusGoogle = roomDatabase.deleteOperation(id)
+            return checkStatusDelete(statusRoom, statusGoogle)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return OperationStatus.DeleteStatus(StatusOperationEnum.FUNC_ERROR.code)
+        }
     }
 
-    override suspend fun getOperationsCount(): Int {
-        googleTableDataBase.getOperationsCount()
-        roomDatabase.getOperationsCount()
-    }
-
-    override suspend fun getTotalAmount(): Double {
-        googleTableDataBase.getTotalAmount()
-        roomDatabase.getTotalAmount()
-    }
-
-    override suspend fun isOperationExists(id: Long): Boolean {
-        googleTableDataBase.isOperationExists(id)
-        return roomDatabase.isOperationExists(id)
-    }
+//    override suspend fun getOperationsCount(): Int {
+//        googleTableDataBase.getOperationsCount()
+//        roomDatabase.getOperationsCount()
+//    }
+//
+//    override suspend fun getTotalAmount(): Double {
+//        googleTableDataBase.getTotalAmount()
+//        roomDatabase.getTotalAmount()
+//    }
+//
+//    override suspend fun isOperationExists(id: Long): Boolean {
+//        googleTableDataBase.isOperationExists(id)
+//        return roomDatabase.isOperationExists(id)
+//    }
 
     //получить оба списка как два множества
     // перемножить первое со вторым и наоборот
@@ -95,13 +108,47 @@ class Repository : OperationRepository {
         statusGoogle: OperationStatus
     ): OperationStatus {
         if (statusRoom is OperationStatus.Success && statusGoogle is OperationStatus.Success)
-            return OperationStatus.InsertStatus(InsertStatusOperationEnum.ALL_REPOSITORY_SUCCESS.code)
+            return OperationStatus.InsertStatus(StatusOperationEnum.ALL_REPOSITORY_SUCCESS.code)
         if (statusRoom is OperationStatus.Error && statusGoogle is OperationStatus.Success)
-            return OperationStatus.InsertStatus(InsertStatusOperationEnum.ROOM_ERROR.code)
+            return OperationStatus.InsertStatus(StatusOperationEnum.ROOM_ERROR.code)
         if (statusRoom is OperationStatus.Success && statusGoogle is OperationStatus.Error)
-            return OperationStatus.InsertStatus(InsertStatusOperationEnum.GOOGLE_ERROR.code)
+            return OperationStatus.InsertStatus(StatusOperationEnum.GOOGLE_ERROR.code)
         if (statusRoom is OperationStatus.Error && statusGoogle is OperationStatus.Error)
-            return OperationStatus.InsertStatus(InsertStatusOperationEnum.INSERT_ERROR.code)
-        return OperationStatus.InsertStatus(InsertStatusOperationEnum.FUNC_ERROR.code)
+            return OperationStatus.InsertStatus(StatusOperationEnum.INSERT_ERROR.code)
+        return OperationStatus.InsertStatus(StatusOperationEnum.FUNC_ERROR.code)
+    }
+
+    private fun checkStatusUpdate(
+        statusRoom: OperationStatus,
+        statusGoogle: OperationStatus,
+        updateRows: Int,
+    ): OperationStatus {
+        if (statusRoom is OperationStatus.Success && statusGoogle is OperationStatus.Success)
+            return OperationStatus.UpdateStatus(
+                StatusOperationEnum.ALL_REPOSITORY_SUCCESS.code,
+                updateRows
+            )
+        if (statusRoom is OperationStatus.Error && statusGoogle is OperationStatus.Success)
+            return OperationStatus.UpdateStatus(StatusOperationEnum.ROOM_ERROR.code, updateRows)
+        if (statusRoom is OperationStatus.Success && statusGoogle is OperationStatus.Error)
+            return OperationStatus.UpdateStatus(StatusOperationEnum.GOOGLE_ERROR.code, updateRows)
+        if (statusRoom is OperationStatus.Error && statusGoogle is OperationStatus.Error)
+            return OperationStatus.UpdateStatus(StatusOperationEnum.INSERT_ERROR.code, updateRows)
+        return OperationStatus.UpdateStatus(StatusOperationEnum.FUNC_ERROR.code, updateRows)
+    }
+
+    private fun checkStatusDelete(
+        statusRoom: OperationStatus,
+        statusGoogle: OperationStatus
+    ): OperationStatus {
+        if (statusRoom is OperationStatus.Success && statusGoogle is OperationStatus.Success)
+            return OperationStatus.DeleteStatus(StatusOperationEnum.ALL_REPOSITORY_SUCCESS.code)
+        if (statusRoom is OperationStatus.Error && statusGoogle is OperationStatus.Success)
+            return OperationStatus.DeleteStatus(StatusOperationEnum.ROOM_ERROR.code)
+        if (statusRoom is OperationStatus.Success && statusGoogle is OperationStatus.Error)
+            return OperationStatus.DeleteStatus(StatusOperationEnum.GOOGLE_ERROR.code)
+        if (statusRoom is OperationStatus.Error && statusGoogle is OperationStatus.Error)
+            return OperationStatus.DeleteStatus(StatusOperationEnum.INSERT_ERROR.code)
+        return OperationStatus.DeleteStatus(StatusOperationEnum.FUNC_ERROR.code)
     }
 }

@@ -24,7 +24,7 @@ interface OperationRepository {
     //  suspend fun deleteOperations(ids: List<Long>): Int // Кол-во удаленных
 
     // UTILS
-    suspend fun getOperationsCount(): Int
-    suspend fun getTotalAmount(): Double
-    suspend fun isOperationExists(id: Long): Boolean
+//    suspend fun getOperationsCount(): Int
+//    suspend fun getTotalAmount(): Double
+//    suspend fun isOperationExists(id: Long): Boolean
 }
