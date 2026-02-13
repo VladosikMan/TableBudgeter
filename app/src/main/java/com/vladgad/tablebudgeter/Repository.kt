@@ -31,14 +31,19 @@ class Repository : OperationRepository {
     }
 
     override suspend fun getOperation(id: Long): OperationStatus {
-
-        googleTableDataBase.getOperation(id)
-        return roomDatabase.getOperation(id)
+        val res =  googleTableDataBase.getOperation(id)
+        return if(res is OperationStatus.SuccessResult)
+            OperationStatus.GetOperationsStatus(StatusOperationEnum.ALL_REPOSITORY_SUCCESS.code, res.listResult)
+        else
+            OperationStatus.GetOperationsStatus(StatusOperationEnum.GOOGLE_ERROR.code, null)
     }
 
     override suspend fun getAllOperations(): OperationStatus {
-        googleTableDataBase.getAllOperations()
-        return roomDatabase.getAllOperations()
+        val res =  googleTableDataBase.getAllOperations()
+        return if(res is OperationStatus.SuccessResult)
+            OperationStatus.GetOperationsStatus(StatusOperationEnum.ALL_REPOSITORY_SUCCESS.code, res.listResult)
+        else
+            OperationStatus.GetOperationsStatus(StatusOperationEnum.GOOGLE_ERROR.code, null)
     }
 
     override suspend fun updateOperation(
