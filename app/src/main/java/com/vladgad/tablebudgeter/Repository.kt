@@ -1,5 +1,7 @@
-package com.vladgad.tablebudgeter.model
+package com.vladgad.tablebudgeter
 
+import com.vladgad.tablebudgeter.model.OperationRepository
+import com.vladgad.tablebudgeter.model.data.InsertStatusOperationEnum
 import com.vladgad.tablebudgeter.model.data.Operation
 import com.vladgad.tablebudgeter.model.data.OperationStatus
 import com.vladgad.tablebudgeter.model.room.BudgeterDataBaseRepository
@@ -12,13 +14,20 @@ class Repository : OperationRepository {
         GoogleSheetsDatabaseRepository()
 
     override suspend fun insertOperation(operation: Operation): OperationStatus {
-        roomDatabase.insertOperation(operation)
-        googleTableDataBase.insertOperation(operation)
+        try {
+            val statusRoom = roomDatabase.insertOperation(operation)
+            val statusGoogle = googleTableDataBase.insertOperation(operation)
+            return checkStatusInsert(statusRoom, statusGoogle)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return OperationStatus.InsertStatus(InsertStatusOperationEnum.FUNC_ERROR.code)
+        }
     }
 
     override suspend fun insertOperations(operations: List<Operation>): OperationStatus {
-        roomDatabase.insertOperations(operations)
-        googleTableDataBase.insertOperations(operations)
+        val statusRoom = roomDatabase.insertOperations(operations)
+        val statusGoogle = googleTableDataBase.insertOperations(operations)
+        return checkStatusInsert(statusRoom, statusGoogle)
     }
 
     override suspend fun getOperation(id: Long): OperationStatus {
@@ -80,5 +89,19 @@ class Repository : OperationRepository {
         roomDatabase.insertOperations(toAddToRoom)
         googleTableDataBase.insertOperations(toAddToGoogle)
     }
-}
 
+    private fun checkStatusInsert(
+        statusRoom: OperationStatus,
+        statusGoogle: OperationStatus
+    ): OperationStatus {
+        if (statusRoom is OperationStatus.Success && statusGoogle is OperationStatus.Success)
+            return OperationStatus.InsertStatus(InsertStatusOperationEnum.ALL_REPOSITORY_SUCCESS.code)
+        if (statusRoom is OperationStatus.Error && statusGoogle is OperationStatus.Success)
+            return OperationStatus.InsertStatus(InsertStatusOperationEnum.ROOM_ERROR.code)
+        if (statusRoom is OperationStatus.Success && statusGoogle is OperationStatus.Error)
+            return OperationStatus.InsertStatus(InsertStatusOperationEnum.GOOGLE_ERROR.code)
+        if (statusRoom is OperationStatus.Error && statusGoogle is OperationStatus.Error)
+            return OperationStatus.InsertStatus(InsertStatusOperationEnum.INSERT_ERROR.code)
+        return OperationStatus.InsertStatus(InsertStatusOperationEnum.FUNC_ERROR.code)
+    }
+}
