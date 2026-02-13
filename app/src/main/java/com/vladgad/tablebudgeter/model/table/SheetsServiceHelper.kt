@@ -1,32 +1,21 @@
 package com.vladgad.tablebudgeter.model.table
 
-import com.google.gson.Gson
-import com.google.gson.JsonArray
-import com.google.gson.JsonObject
 
+import com.google.gson.JsonObject
 import com.vladgad.tablebudgeter.http.KtorClient.Companion.getInstanceClientSheets
 import com.vladgad.tablebudgeter.model.data.Operation
-import com.vladgad.tablebudgeter.model.data.OperationList
 import com.vladgad.tablebudgeter.model.data.parseListOperation
 import com.vladgad.tablebudgeter.model.table.SheetRequestBuilder.createHeadersRequest
 import com.vladgad.tablebudgeter.model.table.SheetRequestBuilder.createInsertAndUpdateRowsRequest
 import com.vladgad.tablebudgeter.model.table.SheetRequestBuilder.createInsertEmptyRowRequest
-import com.vladgad.tablebudgeter.model.table.SheetRequestBuilder.createUpdateRowsRequest
 import com.vladgad.tablebudgeter.utils.GsonClient.Companion.getInstanceGson
 import com.vladgad.tablebudgeter.utils.Utils.Companion.formatDate
-import io.ktor.client.*
 import io.ktor.client.call.*
-import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
-import io.ktor.serialization.gson.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-
 class SheetsServiceHelper() {
     companion object {
         @Volatile
@@ -275,7 +264,7 @@ class SheetsServiceHelper() {
         operations: List<Operation>
     ): Boolean = withContext(Dispatchers.IO) {
         val url = "https://sheets.googleapis.com/v4/spreadsheets/$spreadsheetId:batchUpdate"
-        val token = accessToken ?: return@withContext -1
+        val token = accessToken ?: return@withContext false
         // 1. Преобразуем операции в строки таблицы
         val dataRows = operations.map { operation ->
             listOf<Any>(

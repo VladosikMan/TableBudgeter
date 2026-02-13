@@ -49,6 +49,7 @@ import com.google.android.gms.common.api.Scope
 import com.vladgad.tablebudgeter.google.GoogleSignInUtils
 import com.vladgad.tablebudgeter.google.GoogleSignInUtils.Companion.handleAuthorizationResult
 import com.vladgad.tablebudgeter.google.GoogleSignInUtils.Companion.requestSheetsAuthorization
+import com.vladgad.tablebudgeter.model.Repository
 import com.vladgad.tablebudgeter.model.data.Operation
 import com.vladgad.tablebudgeter.model.data.OperationStatus
 import com.vladgad.tablebudgeter.model.data.OperationStatus.Success
@@ -66,6 +67,8 @@ import kotlin.time.Clock.System.now
 
 class MainActivity : ComponentActivity() {
     private val sheetsHelper: GoogleSheetsDatabaseRepository = GoogleSheetsDatabaseRepository()
+    private val repository = Repository()
+
     private lateinit var startAuthorizationIntent: ActivityResultLauncher<IntentSenderRequest>
     private fun onSuccess(authorizationResult: AuthorizationResult) {
         Toast.makeText(
@@ -133,6 +136,14 @@ class MainActivity : ComponentActivity() {
         Column(
             modifier = Modifier.fillMaxWidth(),
         ) {
+            Button(onClick = {
+                lifecycleScope.launch {
+                    repository.synchronizeRepository()
+                }
+            }) {
+                Text(text = "Получить список таблов ")
+            }
+
             SimpleForm()
         }
     }
