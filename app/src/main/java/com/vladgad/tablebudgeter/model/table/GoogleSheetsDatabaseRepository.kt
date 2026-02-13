@@ -69,9 +69,9 @@ class GoogleSheetsDatabaseRepository() : OperationRepository {
         return try {
             val success = database.updateRowById(spreadsheetId, sheetId, id, operation)
             if (success)
-                OperationStatus.SuccessUpdateDelete(1)
+                OperationStatus.Success(1)
             else
-                OperationStatus.SuccessUpdateDelete(-1)
+                OperationStatus.Error("Ошибка обновления",0)
         } catch (e: Exception) {
             OperationStatus.Error(e.message ?: "Insert failed")
         }
@@ -81,9 +81,9 @@ class GoogleSheetsDatabaseRepository() : OperationRepository {
         return try {
             val success = database.deleteRowById(spreadsheetId, sheetId, id)
             if (success)
-                OperationStatus.SuccessUpdateDelete(1)
+                OperationStatus.Success(1)
             else
-                OperationStatus.SuccessUpdateDelete(-1)
+                OperationStatus.Error("Ошибка удаления",0)
         } catch (e: Exception) {
             OperationStatus.Error(e.message ?: "Insert failed")
         }
