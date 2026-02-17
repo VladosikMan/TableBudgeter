@@ -57,6 +57,7 @@ import com.vladgad.tablebudgeter.model.room.BudgeterDataBaseRepository
 import com.vladgad.tablebudgeter.model.table.GoogleSheetsDatabaseRepository
 import com.vladgad.tablebudgeter.model.table.SheetsServiceHelper
 import com.vladgad.tablebudgeter.ui.theme.TableBudgeterTheme
+import com.vladgad.tablebudgeter.view.HistoryScreen
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -136,15 +137,7 @@ class MainActivity : ComponentActivity() {
         Column(
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Button(onClick = {
-                lifecycleScope.launch {
-                    repository.synchronizeRepository()
-                }
-            }) {
-                Text(text = "Получить список таблов ")
-            }
-
-            SimpleForm()
+            HistoryScreen().HistoryScreen()
         }
     }
 
