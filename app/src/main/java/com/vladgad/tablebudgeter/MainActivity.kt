@@ -137,7 +137,7 @@ class MainActivity : ComponentActivity() {
         Column(
             modifier = Modifier.fillMaxWidth(),
         ) {
-            HistoryScreen().HistoryScreen()
+           HistoryScreen()
         }
     }
 
