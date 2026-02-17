@@ -15,7 +15,7 @@ class GoogleSheetsDatabaseRepository() : OperationRepository {
     }
 
     private val database: SheetsServiceHelper by lazy {
-        SheetsServiceHelper.getInstance()
+        SheetsServiceHelper.INSTANCE_SHEET_HELPER
     }
 
     fun updateAccessToken(token: String) {

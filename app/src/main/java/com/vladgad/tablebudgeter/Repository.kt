@@ -9,6 +9,10 @@ import com.vladgad.tablebudgeter.model.table.GoogleSheetsDatabaseRepository
 
 class Repository : OperationRepository {
     //класс настройки логиги и работы с источниками данных
+    companion object{
+        val INSTANCE_REPOSITORY: Repository by lazy { Repository() }
+    }
+
     private val roomDatabase = BudgeterDataBaseRepository()
     private val googleTableDataBase: GoogleSheetsDatabaseRepository =
         GoogleSheetsDatabaseRepository()

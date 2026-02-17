@@ -2,13 +2,13 @@ package com.vladgad.tablebudgeter.model.table
 
 
 import com.google.gson.JsonObject
-import com.vladgad.tablebudgeter.http.KtorClient.Companion.getInstanceClientSheets
+import com.vladgad.tablebudgeter.http.KtorClient.Companion.INSTANCE_HTTP_CLIENT
 import com.vladgad.tablebudgeter.model.data.Operation
 import com.vladgad.tablebudgeter.model.data.parseListOperation
 import com.vladgad.tablebudgeter.model.table.SheetRequestBuilder.createHeadersRequest
 import com.vladgad.tablebudgeter.model.table.SheetRequestBuilder.createInsertAndUpdateRowsRequest
 import com.vladgad.tablebudgeter.model.table.SheetRequestBuilder.createInsertEmptyRowRequest
-import com.vladgad.tablebudgeter.utils.GsonClient.Companion.getInstanceGson
+import com.vladgad.tablebudgeter.utils.GsonClient.Companion.INSTANCE_GSON
 import com.vladgad.tablebudgeter.utils.Utils.Companion.formatDate
 import io.ktor.client.call.*
 import io.ktor.client.request.*
@@ -16,17 +16,11 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+
 class SheetsServiceHelper() {
     companion object {
-        @Volatile
-        private var INSTANCE: SheetsServiceHelper? = null
-
-        fun getInstance(): SheetsServiceHelper {
-            return INSTANCE ?: synchronized(this) {
-                val client = SheetsServiceHelper()
-                INSTANCE = client
-                client
-            }
+        val INSTANCE_SHEET_HELPER: SheetsServiceHelper by lazy {
+            SheetsServiceHelper()
         }
     }
 
@@ -34,8 +28,8 @@ class SheetsServiceHelper() {
     private val headers =
         listOf("Действие", "Дата", "Сумма", "Счёт", "Приоритет", "Тэг", "Место", "Сообщение", "Id")
 
-    private val client = getInstanceClientSheets()
-    private val gson = getInstanceGson()
+    private val client = INSTANCE_HTTP_CLIENT
+    private val gson = INSTANCE_GSON
 
     fun updateAccessToken(newToken: String?) {
         this.accessToken = newToken

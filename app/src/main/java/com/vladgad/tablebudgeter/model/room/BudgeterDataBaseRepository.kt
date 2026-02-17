@@ -8,7 +8,7 @@ import com.vladgad.tablebudgeter.model.room.OperationExtensions.Companion.toEnti
 
 class BudgeterDataBaseRepository() : OperationRepository {
     private val database: BudgeterDataBase by lazy {
-        BudgeterDataBase.getInstance()
+        BudgeterDataBase.INSTANCE_ROOM_DATABASE
     }
 
     private val operationDao: OperationDAO by lazy {
