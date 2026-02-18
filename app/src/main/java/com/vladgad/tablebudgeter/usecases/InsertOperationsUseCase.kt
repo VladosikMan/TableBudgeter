@@ -1,10 +1,11 @@
 package com.vladgad.tablebudgeter.usecases
 
 import com.vladgad.tablebudgeter.Repository
+import com.vladgad.tablebudgeter.model.OperationRepository
 import com.vladgad.tablebudgeter.model.data.Operation
 import com.vladgad.tablebudgeter.model.data.OperationStatus
 
-class InsertOperationsUseCase (private val repository: Repository){
+class InsertOperationsUseCase (private val repository: OperationRepository){
     suspend operator fun invoke(operations: List<Operation>): OperationStatus {
         // 1. Бизнес‑валидация
         if (operations.isEmpty()) {
