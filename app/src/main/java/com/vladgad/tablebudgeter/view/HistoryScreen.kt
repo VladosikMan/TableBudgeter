@@ -1,7 +1,6 @@
 package com.vladgad.tablebudgeter.view
 
 
-import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,12 +13,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material.icons.filled.Iso
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Shop
 import androidx.compose.material3.AlertDialog
@@ -30,7 +26,6 @@ import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.ExposedDropdownMenuDefaults.TrailingIcon
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -40,7 +35,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -52,10 +46,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.vladgad.tablebudgeter.model.data.Operation
+import com.vladgad.tablebudgeter.utils.TimeUtils.getDateOperationStr
 import com.vladgad.tablebudgeter.viewmodel.HistoryViewModel
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -68,21 +61,6 @@ fun HistoryScreen() {
 
     val operations by viewModel.operations.collectAsState()
 
-
-    // Тестовые данные для списка
-//    val operations = remember {
-//        List(50) { index ->
-//               Operation(
-//                   id = index.toLong(),
-//                   typeOperation = "type",
-//                   message = "Операция №$index",
-//                   amount = (index * 100).toDouble(),
-//                   dateOperation = 0,
-//                   account = "sdsd",
-//               )
-//        }
-//    }
-
     Scaffold(
         topBar = {
             historyAppBar()
@@ -94,31 +72,22 @@ fun HistoryScreen() {
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-
-            // Список операций
-//            LazyColumn(
-//                modifier = Modifier.weight(1f)
-//            ) {
-//                items(operations) { operation ->
-//                    OperationItem(operation)
-//                }
-//            }
-            LazyColumn {
+            LazyColumn(
+                modifier = Modifier.weight(1f)  // <-- ключевой момент
+            ) {
                 items(operations) { operation ->
-                    Text("${operation.amount} ₽ — ${operation.typeOperation}")
+                    OperationItem(operation)
                 }
             }
-
-            // Кнопка внизу с отступами
             Button(
                 onClick = {
                     viewModel.getAllOperation()
-                          },
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp)
             ) {
-                Text("Нажми меня")
+                Text("Обновить список")
             }
         }
     }
@@ -127,7 +96,7 @@ fun HistoryScreen() {
 @OptIn(ExperimentalMaterial3Api::class)
 //@Preview(showBackground = true)
 @Composable
-fun historyAppBar(){
+fun historyAppBar() {
     Column {
         CenterAlignedTopAppBar(
             navigationIcon = { StatItem(title = "2026", value = "фев.⇓") },
@@ -166,6 +135,7 @@ fun StatItem(title: String, value: String) {
         )
     }
 }
+
 @Preview
 @Composable
 fun StatisticsRow(
@@ -197,9 +167,12 @@ fun MyMonthDatePicker() {
             Text("Select Month")
         }
         // Display the selected month and year
-        Text("Selected date: ${state.selectedDateMillis?.let {
-            SimpleDateFormat("MMMM yyyy", Locale.getDefault()).format(it)
-        } ?: "None"}")
+        Text(
+            "Selected date: ${
+                state.selectedDateMillis?.let {
+                    SimpleDateFormat("MMMM yyyy", Locale.getDefault()).format(it)
+                } ?: "None"
+            }")
     }
 
     if (showDialog) {
@@ -239,7 +212,7 @@ fun MonthYearPickerDialog(
     initialYear: Int = 2000,
     initialMonth: Int = 1,
     onDismiss: () -> Unit = {},
-   /* onConfirm: (year: Int, month: Int) -> Unit*/
+    /* onConfirm: (year: Int, month: Int) -> Unit*/
 ) {
     var selectedYear by remember { mutableStateOf(initialYear) }
     var selectedMonth by remember { mutableStateOf(initialMonth) }
@@ -351,7 +324,7 @@ fun OperationItem(operation: Operation) {
 
         // Описание операции (занимает доступное пространство)
         Text(
-            text = operation.message,
+            text = operation.typeOperation,
             style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.weight(1f)
         )
@@ -367,7 +340,7 @@ fun OperationItem(operation: Operation) {
 
             )
             Text(
-                text = "24.12.2026",
+                text = getDateOperationStr(operation.dateOperation),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

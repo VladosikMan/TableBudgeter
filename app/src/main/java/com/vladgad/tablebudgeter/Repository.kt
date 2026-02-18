@@ -42,6 +42,9 @@ class Repository : OperationRepository {
     override suspend fun insertOperations(operations: List<Operation>): OperationStatus {
         val statusRoom = roomDatabase.insertOperations(operations)
         val statusGoogle = googleTableDataBase.insertOperations(operations)
+        _operations.update {
+            it + operations
+        }
         return checkStatusInsert(statusRoom, statusGoogle)
     }
 
