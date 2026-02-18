@@ -1,6 +1,7 @@
 package com.vladgad.tablebudgeter.view
 
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -42,6 +43,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -51,26 +53,35 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.vladgad.tablebudgeter.model.data.Operation
+import com.vladgad.tablebudgeter.viewmodel.HistoryViewModel
 import java.text.SimpleDateFormat
 import java.util.Locale
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HistoryScreen() {
+    val viewModel: HistoryViewModel = viewModel()
+
+    val operations by viewModel.operations.collectAsState()
+
+
     // Тестовые данные для списка
-    val operations = remember {
-        List(50) { index ->
-               Operation(
-                   id = index.toLong(),
-                   typeOperation = "type",
-                   message = "Операция №$index",
-                   amount = (index * 100).toDouble(),
-                   dateOperation = 0,
-                   account = "sdsd",
-               )
-        }
-    }
+//    val operations = remember {
+//        List(50) { index ->
+//               Operation(
+//                   id = index.toLong(),
+//                   typeOperation = "type",
+//                   message = "Операция №$index",
+//                   amount = (index * 100).toDouble(),
+//                   dateOperation = 0,
+//                   account = "sdsd",
+//               )
+//        }
+//    }
 
     Scaffold(
         topBar = {
@@ -85,17 +96,24 @@ fun HistoryScreen() {
         ) {
 
             // Список операций
-            LazyColumn(
-                modifier = Modifier.weight(1f)
-            ) {
+//            LazyColumn(
+//                modifier = Modifier.weight(1f)
+//            ) {
+//                items(operations) { operation ->
+//                    OperationItem(operation)
+//                }
+//            }
+            LazyColumn {
                 items(operations) { operation ->
-                    OperationItem(operation)
+                    Text("${operation.amount} ₽ — ${operation.typeOperation}")
                 }
             }
 
             // Кнопка внизу с отступами
             Button(
-                onClick = { /* Обработка нажатия */ },
+                onClick = {
+                    viewModel.getAllOperation()
+                          },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp)

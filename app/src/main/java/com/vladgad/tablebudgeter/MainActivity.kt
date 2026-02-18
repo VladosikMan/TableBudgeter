@@ -125,11 +125,6 @@ class MainActivity : ComponentActivity() {
             } else
                 Toast.makeText(context, "Аутентификация не прошла", Toast.LENGTH_LONG)
         }
-
-        sheetsHelper.setId(
-            resources.getString(R.string.google_sheet_id),
-            resources.getInteger(R.integer.google_sheet_id_page).toLong()
-        )
     }
 
     @Composable
