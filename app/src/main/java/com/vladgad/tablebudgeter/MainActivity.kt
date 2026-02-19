@@ -58,6 +58,7 @@ import com.vladgad.tablebudgeter.model.table.GoogleSheetsDatabaseRepository
 import com.vladgad.tablebudgeter.model.table.SheetsServiceHelper
 import com.vladgad.tablebudgeter.ui.theme.TableBudgeterTheme
 import com.vladgad.tablebudgeter.view.HistoryScreen
+import com.vladgad.tablebudgeter.view.OperationScreen
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -132,7 +133,7 @@ class MainActivity : ComponentActivity() {
         Column(
             modifier = Modifier.fillMaxWidth(),
         ) {
-           HistoryScreen()
+            OperationScreen()
         }
     }
 
