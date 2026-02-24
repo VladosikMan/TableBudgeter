@@ -90,13 +90,8 @@ data class ChipElement(
     val text: String,
 )
 
-val categories = listOf(
-    ChipElement(Icons.Default.ShoppingCart, "Продукты"),
-    ChipElement(Icons.Default.DirectionsCar, "Транспорт"),
-    ChipElement(Icons.Default.LocalCafe, "Кафе"),
-    ChipElement(Icons.Default.FitnessCenter, "Спорт"),
-    ChipElement(Icons.Default.Movie, "Кино")
-)
+// Модель для приоритета
+data class Priority(val symbol: String)
 
 
 @Composable
@@ -116,14 +111,26 @@ fun operationCreator() {
 
     val operationData by viewModel.operationData.collectAsState()
 
-    Text( text = "${operationData.typeOperation}")
-    CategoryGridSelector(
-        selectedIndex = operationData.typeOperation,
-        onTypeOperationChange = { viewModel.updateTypeOperation(it) }
-    )
-    PaymentRow()
-    TagMessageGeoRow()
-    CalculatorScreen()
+    Text(text = "${operationData.amount}")
+//    CategoryGridSelector(
+//        selectedIndex = operationData.typeOperation,
+//        onTypeOperationChange = { viewModel.updateTypeOperation(it) }
+//    )
+    PaymentRow(
+        selectedAccount = operationData.typeAccount,
+        selectedPriority = operationData.priority,
+        amount = operationData.amount,
+        onSelectedAccountChange = { viewModel.updateAccount(it) },
+        onSelectedPriorityChange = { viewModel.updatePriority(it) })
+
+    TagMessageGeoRow(
+        operationData.tag, operationData.message, operationData.geoStatus,
+        onTagChange = { viewModel.updateTag(it) },
+        onMessageChange = { viewModel.updateMessage(it) },
+        onGeoCheckedChange = { viewModel.updateGeoStatus(it) })
+    CalculatorScreen(
+        amount = operationData.amount,
+        onAmountChange = { viewModel.updateAmount(it) })
 }
 
 
@@ -136,7 +143,7 @@ fun OperationTypeElement(
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
-            .clickable(onClick = { onSelectedChange(!isSelected)  })
+            .clickable(onClick = { onSelectedChange(!isSelected) })
             .padding(8.dp)
     ) {
 
@@ -159,8 +166,10 @@ fun OperationTypeElement(
 }
 
 @Composable
-fun CategoryGridSelector(selectedIndex: Int,
-                         onTypeOperationChange: (Int) -> Unit) {
+fun CategoryGridSelector(
+    selectedIndex: Int,
+    onTypeOperationChange: (Int) -> Unit
+) {
     // Список категорий: иконка, название
     val categories = listOf(
         ChipElement(Icons.Default.ShoppingCart, "Продукты"),
@@ -174,9 +183,6 @@ fun CategoryGridSelector(selectedIndex: Int,
         ChipElement(Icons.Default.Pets, "Зоотовары"),
         ChipElement(Icons.Default.HealthAndSafety, "Здоровье")
     )
-
-
-
     LazyVerticalGrid(
         columns = GridCells.Fixed(4), // ровно 4 столбца
         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -199,9 +205,148 @@ fun CategoryGridSelector(selectedIndex: Int,
 }
 
 @Composable
-fun CalculatorScreen() {
-    var amount by remember { mutableStateOf("0") }
+fun PaymentRow(
+    selectedAccount: Int,
+    selectedPriority: Int,
+    amount: String,
+    onSelectedAccountChange: (Int) -> Unit,
+    onSelectedPriorityChange: (Int) -> Unit
+) {
+    val accounts = listOf(
+        ChipElement(Icons.Default.AccountBalance, "Т-Банк"),
+        ChipElement(Icons.Default.AccountBalanceWallet, "Сбер"),
+        ChipElement(Icons.Default.Business, "ВТБ"),
+        ChipElement(Icons.Default.Money, "Наличка"),
+    )
+    val priorities = listOf(
+        Priority("-2"), Priority("-1"), Priority("0"), Priority("+"), Priority("$")
+    )
 
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Левая часть с горизонтальной прокруткой
+        Row(
+            modifier = Modifier
+                .weight(4f)
+                .horizontalScroll(rememberScrollState()),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Список счетов
+            accounts.forEachIndexed { index, account ->
+                AccountChip(
+                    account = account,
+                    isSelected = selectedAccount == index,
+                    onSelectedChange = { isSelected ->
+                        // Если выбрали этот элемент, передаём его индекс, иначе -1
+                        onSelectedAccountChange(if (isSelected) index else -1)
+                    }
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+            }
+
+            // Вертикальный разделитель
+            Divider(
+                modifier = Modifier
+                    .height(24.dp)
+                    .width(1.dp),
+                color = Color.Gray
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+
+            // Список приоритетов
+            priorities.forEachIndexed { index, priority ->
+                PriorityChip(
+                    priority = priority,
+                    isSelected = selectedPriority == index,
+                    onSelectedChange = { isSelected ->
+                        // Если выбрали этот элемент, передаём его индекс, иначе -1
+                        onSelectedPriorityChange(if (isSelected) index else -1)
+                    }
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+            }
+        }
+
+        // Текст суммы справа
+        Text(
+            text = amount,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.End,
+            modifier = Modifier
+                .padding(start = 8.dp)
+                .weight(1f)
+        )
+    }
+}
+
+
+@Composable
+fun AccountChip(
+    account: ChipElement,
+    isSelected: Boolean,
+    onSelectedChange: (Boolean) -> Unit,
+) {
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        tonalElevation = if (isSelected) 4.dp else 1.dp,
+        color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
+        modifier = Modifier
+            .clip(RoundedCornerShape(16.dp))
+            .clickable { onSelectedChange(!isSelected) }
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+        ) {
+            Icon(
+                imageVector = account.image,
+                contentDescription = null,
+                modifier = Modifier.size(16.dp),
+                tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = account.text,
+                style = MaterialTheme.typography.bodySmall,
+                fontSize = 8.sp,
+                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+            )
+        }
+    }
+}
+
+@Composable
+fun PriorityChip(
+    priority: Priority,
+    isSelected: Boolean,
+    onSelectedChange: (Boolean) -> Unit,
+) {
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        tonalElevation = if (isSelected) 4.dp else 1.dp,
+        color = if (isSelected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surface,
+        modifier = Modifier
+            .clip(RoundedCornerShape(12.dp))
+            .clickable { onSelectedChange(!isSelected) }
+    ) {
+        Text(
+            text = priority.symbol,
+            style = MaterialTheme.typography.bodyMedium,
+            fontSize = 10.sp,
+            modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp),
+            color = if (isSelected) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onSurface
+        )
+    }
+}
+
+
+@Composable
+fun CalculatorScreen(amount: String, onAmountChange: (String) -> Unit) {
     val buttons = listOf(
         "7", "8", "9", "📅",
         "4", "5", "6", "+",
@@ -232,16 +377,19 @@ fun CalculatorScreen() {
 
                             "✖" -> {
                                 if (amount.isNotEmpty()) {
-                                    amount = amount.dropLast(1)
+                                    onAmountChange(amount.dropLast(1))
                                 }
                             }
 
                             else -> {
                                 // Обработка цифр и запятой
                                 if (label.all { it.isDigit() }) {
-                                    amount += label
+                                    if (amount.length == 1 && amount == "0")
+                                        onAmountChange(label)
+                                    else
+                                        onAmountChange(amount + label)
                                 } else if (label == "," && amount.isNotEmpty() && !amount.contains(",")) {
-                                    amount += label
+                                    onAmountChange(amount + label)
                                 }
                             }
                         }
@@ -273,156 +421,17 @@ fun CalculatorButton(
     }
 }
 
-// Модель для приоритета
-data class Priority(val symbol: String)
-
-@Preview(showBackground = true)
-@Composable
-fun PaymentRow() {
-    var selectedAccount by remember { mutableStateOf<ChipElement?>(null) }
-    var selectedPriority by remember { mutableStateOf<Priority?>(null) }
-    var amount by remember { mutableStateOf("0") }
-
-    val accounts = listOf(
-        ChipElement(Icons.Default.AccountBalance, "Т-Банк"),
-        ChipElement(Icons.Default.AccountBalanceWallet, "Сбер"),
-        ChipElement(Icons.Default.Business, "ВТБ"),
-        ChipElement(Icons.Default.Money, "Наличка"),
-        ChipElement(Icons.Default.CreditCard, "Альфа"),
-        ChipElement(Icons.Default.Savings, "Райфф")
-    )
-
-    val priorities = listOf(
-        Priority("-2"), Priority("-1"), Priority("0"), Priority("+"), Priority("$")
-    )
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // Левая часть с горизонтальной прокруткой
-        Row(
-            modifier = Modifier
-                .weight(4f)
-                .horizontalScroll(rememberScrollState()),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Список счетов
-            accounts.forEach { account ->
-                AccountChip(
-                    account = account,
-                    isSelected = selectedAccount == account,
-                    onClick = { selectedAccount = account }
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-            }
-
-            // Вертикальный разделитель
-            Divider(
-                modifier = Modifier
-                    .height(24.dp)
-                    .width(1.dp),
-                color = Color.Gray
-            )
-            Spacer(modifier = Modifier.width(4.dp))
-
-            // Список приоритетов
-            priorities.forEach { priority ->
-                PriorityChip(
-                    priority = priority,
-                    isSelected = selectedPriority == priority,
-                    onClick = { selectedPriority = priority }
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-            }
-        }
-
-        // Текст суммы справа
-        Text(
-            text = amount,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.End,
-            modifier = Modifier
-                .padding(start = 8.dp)
-                .weight(1f)
-        )
-    }
-}
-
-
-@Composable
-fun AccountChip(
-    account: ChipElement,
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
-    Surface(
-        shape = RoundedCornerShape(16.dp),
-        tonalElevation = if (isSelected) 4.dp else 1.dp,
-        color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
-        modifier = Modifier
-            .clip(RoundedCornerShape(16.dp))
-            .clickable { onClick() }
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
-        ) {
-            Icon(
-                imageVector = account.image,
-                contentDescription = null,
-                modifier = Modifier.size(16.dp),
-                tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-            )
-            Spacer(modifier = Modifier.width(4.dp))
-            Text(
-                text = account.text,
-                style = MaterialTheme.typography.bodySmall,
-                fontSize = 8.sp,
-                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-            )
-        }
-    }
-}
-
-@Composable
-fun PriorityChip(
-    priority: Priority,
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
-    Surface(
-        shape = RoundedCornerShape(12.dp),
-        tonalElevation = if (isSelected) 4.dp else 1.dp,
-        color = if (isSelected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surface,
-        modifier = Modifier
-            .clip(RoundedCornerShape(12.dp))
-            .clickable { onClick() }
-    ) {
-        Text(
-            text = priority.symbol,
-            style = MaterialTheme.typography.bodyMedium,
-            fontSize = 10.sp,
-            modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp),
-            color = if (isSelected) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onSurface
-        )
-    }
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Preview(showBackground = true)
 @Composable
-fun TagMessageGeoRow() {
-    var tagText by remember { mutableStateOf("") }
-    var messageText by remember { mutableStateOf("") }
-    var isGeoChecked by remember { mutableStateOf(false) }
+fun TagMessageGeoRow(
+    tagText: String, messageText: String, isGeoChecked: Boolean,
+    onTagChange: (String) -> Unit,
+    onMessageChange: (String) -> Unit,
+    onGeoCheckedChange: (Boolean) -> Unit
+) {
     var expanded by remember { mutableStateOf(false) }
-
     val tags = listOf("еда", "транспорт", "развлечения", "здоровье", "кафе")
-
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -440,7 +449,7 @@ fun TagMessageGeoRow() {
         ) {
             OutlinedTextField(
                 value = tagText,
-                onValueChange = { tagText = it },
+                onValueChange = { onTagChange(it) },
                 readOnly = false,
                 placeholder = { Text("Тэг") },
                 leadingIcon = { Icon(Icons.Default.Label, contentDescription = null) },
@@ -459,7 +468,7 @@ fun TagMessageGeoRow() {
                     DropdownMenuItem(
                         text = { Text(tag, fontSize = 6.sp) },
                         onClick = {
-                            tagText = tag
+                            onTagChange(tag)
                             expanded = false
                         }
                     )
@@ -472,7 +481,7 @@ fun TagMessageGeoRow() {
         // Поле сообщения (50% ширины)
         OutlinedTextField(
             value = messageText,
-            onValueChange = { messageText = it },
+            onValueChange = { onMessageChange(it) },
             placeholder = { Text("Сообщение") },
             leadingIcon = { Icon(Icons.Default.Message, contentDescription = null) },
             shape = RoundedCornerShape(8.dp),
@@ -506,7 +515,7 @@ fun TagMessageGeoRow() {
                 )
                 Checkbox(
                     checked = isGeoChecked,
-                    onCheckedChange = { isGeoChecked = it },
+                    onCheckedChange = { onGeoCheckedChange(it) },
                     modifier = Modifier.size(24.dp)
                 )
             }

@@ -5,7 +5,7 @@ data class OperationData (
     var typeOperation: Int,
     var typeAccount: Int,
     var priority: Int,
-    var amount: Double,
+    var amount: String,
     var tag: String,
     var message: String,
     var geoStatus : Boolean,
