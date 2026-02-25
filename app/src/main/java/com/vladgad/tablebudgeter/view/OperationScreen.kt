@@ -1,6 +1,7 @@
 package com.vladgad.tablebudgeter.view
 
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -79,12 +80,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.vladgad.tablebudgeter.BudgeterApp
 import com.vladgad.tablebudgeter.viewmodel.OperationData
 import com.vladgad.tablebudgeter.viewmodel.OperationViewModel
 import kotlinx.coroutines.launch
@@ -100,6 +103,14 @@ data class Priority(val symbol: String)
 @Composable
 fun OperationScreen(viewModel: OperationViewModel = viewModel()) {
     val operationData by viewModel.operationData.collectAsState()
+
+    val statusInsertOperation by viewModel.statusInsertOperation.collectAsState()
+    if (statusInsertOperation) {
+        val context = LocalContext.current
+        Toast.makeText(context, "Операция прошла успешно", Toast.LENGTH_SHORT).show()
+        viewModel.updateOperationStatus()
+    }
+
     CategoryGridSelector(
         selectedIndex = operationData.typeOperation,
         onTypeOperationChange = {
@@ -111,7 +122,7 @@ fun OperationScreen(viewModel: OperationViewModel = viewModel()) {
 }
 
 @Composable
-fun operationCreator(viewModel: OperationViewModel) {
+fun OperationCreator(viewModel: OperationViewModel) {
     val operationData by viewModel.operationData.collectAsState()
     PaymentRow(
         selectedAccount = operationData.typeAccount,
@@ -128,7 +139,6 @@ fun operationCreator(viewModel: OperationViewModel) {
         amount = operationData.amount,
         onAmountChange = { viewModel.updateAmount(it) },
         createOperation = { viewModel.insertOperation() })
-
 }
 
 @Composable
@@ -534,7 +544,7 @@ fun OperationBottom(viewModel: OperationViewModel) {
             onDismissRequest = { viewModel.closeBottomSheet() },
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         ) {
-            operationCreator(viewModel)
+            OperationCreator(viewModel)
         }
     }
 }

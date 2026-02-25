@@ -32,6 +32,7 @@ import kotlinx.coroutines.launch
 import java.util.Date
 
 class OperationViewModel : ViewModel() {
+
     val categoriesConsumption = listOf(
         ChipElement(Icons.Default.ShoppingCart, "Продукты"),
         ChipElement(Icons.Default.DirectionsCar, "Транспорт"),
@@ -59,6 +60,9 @@ class OperationViewModel : ViewModel() {
         )
     )
     val operationData: StateFlow<OperationData> = _operationData.asStateFlow()
+    private val _statusInsertOperation = MutableStateFlow(false)
+    val statusInsertOperation: StateFlow<Boolean> = _statusInsertOperation.asStateFlow()
+
     private val _showBottomSheet = MutableStateFlow(false)
     val showBottomSheet: StateFlow<Boolean> = _showBottomSheet.asStateFlow()
 
@@ -98,9 +102,9 @@ class OperationViewModel : ViewModel() {
         _operationData.update { it.copy(amount = amount) }
     }
 
-    fun insertOperation(){
-        val operationData= _operationData.value
-        val operation  = Operation(
+    fun insertOperation() {
+        val operationData = _operationData.value
+        val operation = Operation(
             typeOperation = categoriesConsumption[operationData.typeOperation].text,
             dateOperation = Date().time,
             amount = operationData.amount.toDouble(),
@@ -111,7 +115,20 @@ class OperationViewModel : ViewModel() {
         )
         Log.d(mTag, Gson().toJson(operation))
         viewModelScope.launch {
-            val result = InsertOperationsUseCase(Repository.INSTANCE_REPOSITORY).invoke(listOf(operation))
+            val result =
+                InsertOperationsUseCase(Repository.INSTANCE_REPOSITORY).invoke(listOf(operation))
+            _statusInsertOperation.update {
+                true
+            }
+            _showBottomSheet.update{
+                false
+            }
+        }
+    }
+
+    fun updateOperationStatus() {
+        _statusInsertOperation.update {
+            false
         }
     }
 }
