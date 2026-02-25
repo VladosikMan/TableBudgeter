@@ -9,11 +9,21 @@ import kotlinx.coroutines.flow.update
 class OperationViewModel : ViewModel() {
     private val _operationData = MutableStateFlow<OperationData>(
         OperationData(
-            typeOperation = 0,
+            typeOperation = -1,
             typeAccount = 0, priority = 2, amount = "0", tag = "", message = "", geoStatus = false
         )
     )
     val operationData: StateFlow<OperationData> = _operationData.asStateFlow()
+    private val _showBottomSheet = MutableStateFlow(false)
+    val showBottomSheet: StateFlow<Boolean> = _showBottomSheet.asStateFlow()
+
+    fun openBottomSheet() {
+        _showBottomSheet.value = true
+    }
+
+    fun closeBottomSheet() {
+        _showBottomSheet.value = false
+    }
 
     fun updateTypeOperation(type: Int) {
         _operationData.update { it.copy(typeOperation = type) }

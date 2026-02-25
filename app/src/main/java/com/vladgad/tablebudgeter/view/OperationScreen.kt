@@ -33,6 +33,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.AccountBalanceWallet
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.CreditCard
@@ -57,11 +58,15 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -95,8 +100,17 @@ data class Priority(val symbol: String)
 
 
 @Composable
-fun OperationScreen() {
-    operationCreator()
+fun OperationScreen(viewModel: OperationViewModel = viewModel()) {
+    val operationData by viewModel.operationData.collectAsState()
+
+    CategoryGridSelector(
+        selectedIndex = operationData.typeOperation,
+        onTypeOperationChange = { viewModel.updateTypeOperation(it)
+                                    viewModel.openBottomSheet()}
+    )
+    OperationBottom(viewModel)
+    //  testBottom()
+    //operationCreator()
     // TagMessageGeoRow()
     //PaymentRow()
     //CalculatorScreen()
@@ -106,23 +120,21 @@ fun OperationScreen() {
 
 //@Preview(showBackground = true)
 @Composable
-fun operationCreator() {
-    val viewModel: OperationViewModel = viewModel()
+fun operationCreator(viewModel: OperationViewModel) {
+
 
     val operationData by viewModel.operationData.collectAsState()
 
-    Text(text = "${operationData.amount}")
-//    CategoryGridSelector(
-//        selectedIndex = operationData.typeOperation,
-//        onTypeOperationChange = { viewModel.updateTypeOperation(it) }
-//    )
+    /*    CategoryGridSelector(
+            selectedIndex = operationData.typeOperation,
+            onTypeOperationChange = { viewModel.updateTypeOperation(it) }
+        )*/
     PaymentRow(
         selectedAccount = operationData.typeAccount,
         selectedPriority = operationData.priority,
         amount = operationData.amount,
         onSelectedAccountChange = { viewModel.updateAccount(it) },
         onSelectedPriorityChange = { viewModel.updatePriority(it) })
-
     TagMessageGeoRow(
         operationData.tag, operationData.message, operationData.geoStatus,
         onTagChange = { viewModel.updateTag(it) },
@@ -631,3 +643,16 @@ fun TransfersContent() = Box(
 ) { Text("Список переводов") }
 
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun OperationBottom(viewModel: OperationViewModel) {
+    val showBottomSheet by viewModel.showBottomSheet.collectAsState()
+    if (showBottomSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { viewModel.closeBottomSheet() },
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        ) {
+            operationCreator(viewModel)
+        }
+    }
+}
