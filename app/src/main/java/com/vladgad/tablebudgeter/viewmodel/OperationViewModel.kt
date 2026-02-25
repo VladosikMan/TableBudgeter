@@ -1,12 +1,57 @@
 package com.vladgad.tablebudgeter.viewmodel
 
+import android.util.Log
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountBalance
+import androidx.compose.material.icons.filled.AccountBalanceWallet
+import androidx.compose.material.icons.filled.Book
+import androidx.compose.material.icons.filled.Business
+import androidx.compose.material.icons.filled.DirectionsCar
+import androidx.compose.material.icons.filled.FitnessCenter
+import androidx.compose.material.icons.filled.HealthAndSafety
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.LocalCafe
+import androidx.compose.material.icons.filled.Money
+import androidx.compose.material.icons.filled.Movie
+import androidx.compose.material.icons.filled.Pets
+import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.google.gson.Gson
+import com.vladgad.tablebudgeter.Repository
+import com.vladgad.tablebudgeter.model.data.Operation
+import com.vladgad.tablebudgeter.usecases.GetAllOperationUseCase
+import com.vladgad.tablebudgeter.usecases.InsertOperationsUseCase
+import com.vladgad.tablebudgeter.view.ChipElement
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import java.util.Date
 
 class OperationViewModel : ViewModel() {
+    val categoriesConsumption = listOf(
+        ChipElement(Icons.Default.ShoppingCart, "Продукты"),
+        ChipElement(Icons.Default.DirectionsCar, "Транспорт"),
+        ChipElement(Icons.Default.LocalCafe, "Кафе"),
+        ChipElement(Icons.Default.FitnessCenter, "Спорт"),
+        ChipElement(Icons.Default.Movie, "Кино"),
+        ChipElement(Icons.Default.Book, "Книги"),
+        ChipElement(Icons.Default.Phone, "Связь"),
+        ChipElement(Icons.Default.Home, "Жильё"),
+        ChipElement(Icons.Default.Pets, "Зоотовары"),
+        ChipElement(Icons.Default.HealthAndSafety, "Здоровье")
+    )
+    val accounts = listOf(
+        ChipElement(Icons.Default.AccountBalance, "Т-Банк"),
+        ChipElement(Icons.Default.AccountBalanceWallet, "Сбер"),
+        ChipElement(Icons.Default.Business, "ВТБ"),
+        ChipElement(Icons.Default.Money, "Наличка"),
+    )
+
+    private val mTag = "OperationViewModel"
     private val _operationData = MutableStateFlow<OperationData>(
         OperationData(
             typeOperation = -1,
@@ -51,5 +96,22 @@ class OperationViewModel : ViewModel() {
 
     fun updateAmount(amount: String) {
         _operationData.update { it.copy(amount = amount) }
+    }
+
+    fun insertOperation(){
+        val operationData= _operationData.value
+        val operation  = Operation(
+            typeOperation = categoriesConsumption[operationData.typeOperation].text,
+            dateOperation = Date().time,
+            amount = operationData.amount.toDouble(),
+            account = accounts[operationData.typeAccount].text,
+            priority = operationData.priority,
+            tag = operationData.tag,
+            message = operationData.message
+        )
+        Log.d(mTag, Gson().toJson(operation))
+        viewModelScope.launch {
+            val result = InsertOperationsUseCase(Repository.INSTANCE_REPOSITORY).invoke(listOf(operation))
+        }
     }
 }

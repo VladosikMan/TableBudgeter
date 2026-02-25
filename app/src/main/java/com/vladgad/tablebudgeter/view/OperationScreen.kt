@@ -95,40 +95,24 @@ data class ChipElement(
     val text: String,
 )
 
-// Модель для приоритета
 data class Priority(val symbol: String)
-
 
 @Composable
 fun OperationScreen(viewModel: OperationViewModel = viewModel()) {
     val operationData by viewModel.operationData.collectAsState()
-
     CategoryGridSelector(
         selectedIndex = operationData.typeOperation,
-        onTypeOperationChange = { viewModel.updateTypeOperation(it)
-                                    viewModel.openBottomSheet()}
+        onTypeOperationChange = {
+            viewModel.updateTypeOperation(it)
+            viewModel.openBottomSheet()
+        }
     )
     OperationBottom(viewModel)
-    //  testBottom()
-    //operationCreator()
-    // TagMessageGeoRow()
-    //PaymentRow()
-    //CalculatorScreen()
-    //CategoryGridSelector()
-    //CustomTabsScreen()
 }
 
-//@Preview(showBackground = true)
 @Composable
 fun operationCreator(viewModel: OperationViewModel) {
-
-
     val operationData by viewModel.operationData.collectAsState()
-
-    /*    CategoryGridSelector(
-            selectedIndex = operationData.typeOperation,
-            onTypeOperationChange = { viewModel.updateTypeOperation(it) }
-        )*/
     PaymentRow(
         selectedAccount = operationData.typeAccount,
         selectedPriority = operationData.priority,
@@ -142,9 +126,10 @@ fun operationCreator(viewModel: OperationViewModel) {
         onGeoCheckedChange = { viewModel.updateGeoStatus(it) })
     CalculatorScreen(
         amount = operationData.amount,
-        onAmountChange = { viewModel.updateAmount(it) })
-}
+        onAmountChange = { viewModel.updateAmount(it) },
+        createOperation = { viewModel.insertOperation() })
 
+}
 
 @Composable
 fun OperationTypeElement(
@@ -358,7 +343,11 @@ fun PriorityChip(
 
 
 @Composable
-fun CalculatorScreen(amount: String, onAmountChange: (String) -> Unit) {
+fun CalculatorScreen(
+    amount: String,
+    onAmountChange: (String) -> Unit,
+    createOperation: () -> Unit
+) {
     val buttons = listOf(
         "7", "8", "9", "📅",
         "4", "5", "6", "+",
@@ -384,7 +373,8 @@ fun CalculatorScreen(amount: String, onAmountChange: (String) -> Unit) {
                     onClick = {
                         // Здесь можно добавить логику обработки нажатий
                         when (label) {
-                            "✓" -> { /* подтвердить */
+                            "✓" -> {
+                                createOperation()
                             }
 
                             "✖" -> {
@@ -535,6 +525,20 @@ fun TagMessageGeoRow(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun OperationBottom(viewModel: OperationViewModel) {
+    val showBottomSheet by viewModel.showBottomSheet.collectAsState()
+    if (showBottomSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { viewModel.closeBottomSheet() },
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        ) {
+            operationCreator(viewModel)
+        }
+    }
+}
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -591,7 +595,6 @@ fun CustomTabsScreen() {
     }
 }
 
-
 @Composable
 fun TabButton(
     title: String,
@@ -643,16 +646,3 @@ fun TransfersContent() = Box(
 ) { Text("Список переводов") }
 
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun OperationBottom(viewModel: OperationViewModel) {
-    val showBottomSheet by viewModel.showBottomSheet.collectAsState()
-    if (showBottomSheet) {
-        ModalBottomSheet(
-            onDismissRequest = { viewModel.closeBottomSheet() },
-            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        ) {
-            operationCreator(viewModel)
-        }
-    }
-}

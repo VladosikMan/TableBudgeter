@@ -28,8 +28,6 @@ class HistoryViewModel : ViewModel() {
     fun getAllOperation(){
         viewModelScope.launch {
             val result = GetAllOperationUseCase(Repository.INSTANCE_REPOSITORY).invoke()
-
-            val x = 12
         }
     }
 
