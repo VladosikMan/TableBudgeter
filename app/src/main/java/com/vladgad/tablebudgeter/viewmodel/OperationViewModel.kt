@@ -21,9 +21,8 @@ import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
 import com.vladgad.tablebudgeter.Repository
 import com.vladgad.tablebudgeter.model.data.Operation
-import com.vladgad.tablebudgeter.usecases.GetAllOperationUseCase
 import com.vladgad.tablebudgeter.usecases.InsertOperationsUseCase
-import com.vladgad.tablebudgeter.view.ChipElement
+import com.vladgad.tablebudgeter.view.data.ChipElement
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
