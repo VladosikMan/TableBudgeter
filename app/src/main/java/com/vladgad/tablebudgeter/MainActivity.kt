@@ -57,6 +57,7 @@ import com.vladgad.tablebudgeter.model.room.BudgeterDataBaseRepository
 import com.vladgad.tablebudgeter.model.table.GoogleSheetsDatabaseRepository
 import com.vladgad.tablebudgeter.model.table.SheetsServiceHelper
 import com.vladgad.tablebudgeter.ui.theme.TableBudgeterTheme
+import com.vladgad.tablebudgeter.view.AnalyticsScreen
 import com.vladgad.tablebudgeter.view.HistoryScreen
 import com.vladgad.tablebudgeter.view.OperationScreen
 import kotlinx.coroutines.launch
@@ -133,7 +134,7 @@ class MainActivity : ComponentActivity() {
         Column(
             modifier = Modifier.fillMaxWidth(),
         ) {
-            OperationScreen()
+            AnalyticsScreen()
         }
     }
 
@@ -146,128 +147,5 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    @Composable
-    fun SimpleForm() {
-        var action by remember { mutableStateOf("") }
-        var amount by remember { mutableStateOf("") }
-        var selectedPlace by remember { mutableStateOf("Сбербанк") }
-        var loading by remember { mutableStateOf(false) }
-        var message by remember { mutableStateOf("") }
-
-        val places = listOf("Сбербанк", "ВТБ", "Тбанк", "Наличка")
-        val scope = rememberCoroutineScope()
-
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.Center
-        ) {
-            // Поле ввода действия
-            OutlinedTextField(
-                value = action,
-                onValueChange = { action = it },
-                label = { Text("Действие") },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Поле ввода суммы
-            OutlinedTextField(
-                value = amount,
-                onValueChange = { amount = it },
-                label = { Text("Сумма") },
-                modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions.Default.copy(
-                    keyboardType = KeyboardType.Number
-                )
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Простой выбор места через Row с кнопками
-            Text("Источник:", modifier = Modifier.padding(bottom = 4.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-
-                ) {
-                places.forEach { place ->
-                    FilterChip(
-                        selected = selectedPlace == place,
-                        onClick = { selectedPlace = place },
-                        label = { Text(place) }
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Кнопка
-            Button(
-                onClick = {
-                    if (action.isBlank() || amount.isBlank()) {
-                        message = "Заполните все поля"
-                        return@Button
-                    }
-
-                    loading = true
-                    message = "Добавляем..."
-
-                    scope.launch {
-                        try {
-                            val success = sheetsHelper.insertOperation(
-                                Operation(
-                                    typeOperation = action,
-                                    dateOperation = Date().time,
-                                    amount = amount.toDouble(),
-                                    account = selectedPlace,
-                                    id = Date().time
-                                )
-                            ) as Success
-
-                            message = if (success.id == 1.0.toLong()) {
-                                "✅ Добавлено"
-
-                            } else {
-                                "❌ Ошибка вставки строки"
-                            }
-                        } catch (e: Exception) {
-                            message = "❌ Ошибка: ${e.message}"
-                        } finally {
-                            loading = false
-                        }
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
-                enabled = !loading
-            ) {
-                if (loading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        strokeWidth = 2.dp
-                    )
-                } else {
-                    Text("Добавить запись")
-                }
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Сообщение о статусе
-            if (message.isNotEmpty()) {
-                Text(
-                    text = message,
-                    color = when {
-                        message.startsWith("✅") -> MaterialTheme.colorScheme.primary
-                        message.startsWith("❌") -> MaterialTheme.colorScheme.error
-                        else -> MaterialTheme.colorScheme.onSurface
-                    }
-                )
-            }
-        }
-    }
 }
 
