@@ -25,21 +25,9 @@ import com.vladgad.tablebudgeter.view.data.ChipElement
 @Composable
 fun CategoryGridSelector(
     selectedIndex: Int,
+    categories: List<ChipElement>,
     onTypeOperationChange: (Int) -> Unit
 ) {
-    // Список категорий: иконка, название
-    val categories = listOf(
-        ChipElement(Icons.Default.ShoppingCart, "Продукты"),
-        ChipElement(Icons.Default.DirectionsCar, "Транспорт"),
-        ChipElement(Icons.Default.LocalCafe, "Кафе"),
-        ChipElement(Icons.Default.FitnessCenter, "Спорт"),
-        ChipElement(Icons.Default.Movie, "Кино"),
-        ChipElement(Icons.Default.Book, "Книги"),
-        ChipElement(Icons.Default.Phone, "Связь"),
-        ChipElement(Icons.Default.Home, "Жильё"),
-        ChipElement(Icons.Default.Pets, "Зоотовары"),
-        ChipElement(Icons.Default.HealthAndSafety, "Здоровье")
-    )
     LazyVerticalGrid(
         columns = GridCells.Fixed(4), // ровно 4 столбца
         horizontalArrangement = Arrangement.spacedBy(8.dp),

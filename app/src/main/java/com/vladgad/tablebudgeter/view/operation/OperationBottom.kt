@@ -10,14 +10,14 @@ import com.vladgad.tablebudgeter.viewmodel.OperationViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun OperationBottom(viewModel: OperationViewModel) {
+fun OperationBottom(viewModel: OperationViewModel, modif : Byte) {
     val showBottomSheet by viewModel.showBottomSheet.collectAsState()
     if (showBottomSheet) {
         ModalBottomSheet(
             onDismissRequest = { viewModel.closeBottomSheet() },
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         ) {
-            OperationCreator(viewModel)
+            OperationCreator(viewModel, modif)
         }
     }
 }

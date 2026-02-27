@@ -2,20 +2,42 @@ package com.vladgad.tablebudgeter.viewmodel
 
 import android.util.Log
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.AccountBalanceWallet
+import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.Book
+import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Business
+import androidx.compose.material.icons.filled.CardGiftcard
+import androidx.compose.material.icons.filled.Copyright
 import androidx.compose.material.icons.filled.DirectionsCar
+import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.Face
 import androidx.compose.material.icons.filled.FitnessCenter
+import androidx.compose.material.icons.filled.Flight
 import androidx.compose.material.icons.filled.HealthAndSafety
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.House
+import androidx.compose.material.icons.filled.LocalBar
 import androidx.compose.material.icons.filled.LocalCafe
+import androidx.compose.material.icons.filled.LocalGasStation
 import androidx.compose.material.icons.filled.Money
+import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.Movie
+import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Pets
 import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.Redeem
+import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.Sell
+import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.Store
+import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material.icons.filled.TrendingUp
+import androidx.compose.material.icons.filled.VolunteerActivism
+import androidx.compose.material.icons.filled.Work
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
@@ -32,7 +54,9 @@ import java.util.Date
 
 class OperationViewModel : ViewModel() {
 
-    val categoriesConsumption = listOf(
+
+    // Расширенный список категорий расходов
+    val expenseCategories = listOf(
         ChipElement(Icons.Default.ShoppingCart, "Продукты"),
         ChipElement(Icons.Default.DirectionsCar, "Транспорт"),
         ChipElement(Icons.Default.LocalCafe, "Кафе"),
@@ -42,7 +66,39 @@ class OperationViewModel : ViewModel() {
         ChipElement(Icons.Default.Phone, "Связь"),
         ChipElement(Icons.Default.Home, "Жильё"),
         ChipElement(Icons.Default.Pets, "Зоотовары"),
-        ChipElement(Icons.Default.HealthAndSafety, "Здоровье")
+        ChipElement(Icons.Default.HealthAndSafety, "Здоровье"),
+        ChipElement(Icons.Default.ShoppingBag, "Одежда"),
+        ChipElement(Icons.Default.Face, "Косметика"),
+        ChipElement(Icons.Default.CardGiftcard, "Подарки"),
+        ChipElement(Icons.Default.Flight, "Путешествия"),
+        ChipElement(Icons.Default.LocalGasStation, "Автомобиль"),
+        ChipElement(Icons.Default.Security, "Страхование"),
+        ChipElement(Icons.Default.AttachMoney, "Налоги"),
+        ChipElement(Icons.Default.Build, "Ремонт"),
+        ChipElement(Icons.Default.Palette, "Хобби"),
+        ChipElement(Icons.Default.LocalBar, "Алкоголь"),
+        ChipElement(Icons.Default.VolunteerActivism, "Благотворительность"),
+        ChipElement(Icons.Default.MoreHoriz, "Прочее")
+    )
+
+    // Расширенный список категорий доходов
+    val incomeCategories = listOf(
+        ChipElement(Icons.Default.Work, "Зарплата"),
+        ChipElement(Icons.Default.Business, "Бизнес"),
+        ChipElement(Icons.Default.AttachMoney, "Фриланс"),
+        ChipElement(Icons.Default.Store, "Подработка"),
+        ChipElement(Icons.Default.TrendingUp, "Инвестиции"),
+        ChipElement(Icons.Default.Money, "Дивиденды"),
+        ChipElement(Icons.Default.AccountBalance, "Проценты по вкладам"),
+        ChipElement(Icons.Default.CardGiftcard, "Подарки"),
+        ChipElement(Icons.Default.SwapHoriz, "Возврат долгов"),
+        ChipElement(Icons.Default.Sell, "Продажа вещей"),
+        ChipElement(Icons.Default.Redeem, "Кэшбэк"),
+        ChipElement(Icons.Default.VolunteerActivism, "Социальные выплаты"),
+        ChipElement(Icons.Default.House, "Аренда"),
+        ChipElement(Icons.Default.Copyright, "Роялти"),
+        ChipElement(Icons.Default.EmojiEvents, "Выигрыши"),
+        ChipElement(Icons.Default.MoreHoriz, "Прочие доходы")
     )
     val accounts = listOf(
         ChipElement(Icons.Default.AccountBalance, "Т-Банк"),
@@ -101,12 +157,16 @@ class OperationViewModel : ViewModel() {
         _operationData.update { it.copy(amount = amount) }
     }
 
-    fun insertOperation() {
+    fun insertOperation(modif : Byte) {
         val operationData = _operationData.value
+        val categories = if(modif.toInt() == -1)
+            expenseCategories
+        else
+            incomeCategories
         val operation = Operation(
-            typeOperation = categoriesConsumption[operationData.typeOperation].text,
+            typeOperation = categories[operationData.typeOperation].text,
             dateOperation = Date().time,
-            amount = operationData.amount.toDouble(),
+            amount = operationData.amount.toDouble() * modif,
             account = accounts[operationData.typeAccount].text,
             priority = operationData.priority,
             tag = operationData.tag,

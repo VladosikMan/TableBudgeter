@@ -6,7 +6,7 @@ import androidx.compose.runtime.getValue
 import com.vladgad.tablebudgeter.viewmodel.OperationViewModel
 
 @Composable
-fun OperationCreator(viewModel: OperationViewModel) {
+fun OperationCreator(viewModel: OperationViewModel, modif : Byte) {
     val operationData by viewModel.operationData.collectAsState()
     PaymentRow(
         selectedAccount = operationData.typeAccount,
@@ -22,5 +22,5 @@ fun OperationCreator(viewModel: OperationViewModel) {
     CalculatorScreen(
         amount = operationData.amount,
         onAmountChange = { viewModel.updateAmount(it) },
-        createOperation = { viewModel.insertOperation() })
+        createOperation = { viewModel.insertOperation(modif) })
 }
