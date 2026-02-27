@@ -52,10 +52,9 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.Date
 
+
+// Расширенный список категорий расходов
 class OperationViewModel : ViewModel() {
-
-
-    // Расширенный список категорий расходов
     val expenseCategories = listOf(
         ChipElement(Icons.Default.ShoppingCart, "Продукты"),
         ChipElement(Icons.Default.DirectionsCar, "Транспорт"),
@@ -157,9 +156,9 @@ class OperationViewModel : ViewModel() {
         _operationData.update { it.copy(amount = amount) }
     }
 
-    fun insertOperation(modif : Byte) {
+    fun insertOperation(modif: Byte) {
         val operationData = _operationData.value
-        val categories = if(modif.toInt() == -1)
+        val categories = if (modif.toInt() == -1)
             expenseCategories
         else
             incomeCategories
@@ -179,15 +178,32 @@ class OperationViewModel : ViewModel() {
             _statusInsertOperation.update {
                 true
             }
-            _showBottomSheet.update{
+            _showBottomSheet.update {
                 false
             }
+            _operationData.update { it.copy(amount = "0") }
         }
     }
 
     fun updateOperationStatus() {
         _statusInsertOperation.update {
             false
+        }
+    }
+
+    fun transferOperation(fromAccount: String, toAccount: String, amount: String) {
+        val summ = amount.toDouble()
+        val operationOne =
+            Operation(typeOperation = "Перевод", amount = -1.0 * summ, account = fromAccount)
+        val operationTwo = Operation(typeOperation = "Перевод", amount = summ, account = toAccount)
+        viewModelScope.launch {
+            val result =
+                InsertOperationsUseCase(Repository.INSTANCE_REPOSITORY).invoke(
+                    listOf(
+                        operationTwo,
+                        operationOne
+                    )
+                )
         }
     }
 }

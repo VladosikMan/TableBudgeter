@@ -4,7 +4,7 @@ import java.util.Date
 
 data class Operation(
     val typeOperation: String,
-    val dateOperation: Long,
+    val dateOperation: Long = Date().time,
     val amount: Double,
     val account: String,
     val id: Long = Date().time,
