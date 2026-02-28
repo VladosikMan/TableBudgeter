@@ -69,9 +69,6 @@ import kotlin.text.toLong
 import kotlin.time.Clock.System.now
 
 class MainActivity : ComponentActivity() {
-    private val sheetsHelper: GoogleSheetsDatabaseRepository = GoogleSheetsDatabaseRepository()
-    private val repository = Repository()
-
     private lateinit var startAuthorizationIntent: ActivityResultLauncher<IntentSenderRequest>
     private fun onSuccess(authorizationResult: AuthorizationResult) {
         Toast.makeText(
@@ -79,7 +76,8 @@ class MainActivity : ComponentActivity() {
             "Доступ к Google Sheets получен successful",
             Toast.LENGTH_LONG
         ).show()
-        sheetsHelper.updateAccessToken(authorizationResult.accessToken!!)
+        Repository.INSTANCE_REPOSITORY.updateGoogleToken(authorizationResult.accessToken!!)
+
     }
 
     private var pendingAction: (() -> Unit)? = null
@@ -134,7 +132,7 @@ class MainActivity : ComponentActivity() {
         Column(
             modifier = Modifier.fillMaxWidth(),
         ) {
-            AnalyticsScreen()
+            OperationScreen()
         }
     }
 
