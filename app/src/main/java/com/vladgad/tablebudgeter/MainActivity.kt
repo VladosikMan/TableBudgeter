@@ -1,5 +1,6 @@
 package com.vladgad.tablebudgeter
 
+import android.annotation.SuppressLint
 import android.app.Application
 import android.os.Bundle
 import android.util.Log
@@ -11,7 +12,9 @@ import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -21,26 +24,50 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.automirrored.filled.ShowChart
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Analytics
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.ShowChart
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.coroutineScope
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
 import com.google.android.gms.auth.api.identity.AuthorizationRequest
 import com.google.android.gms.auth.api.identity.AuthorizationResult
 import com.google.android.gms.auth.api.identity.Identity
@@ -58,8 +85,10 @@ import com.vladgad.tablebudgeter.model.table.GoogleSheetsDatabaseRepository
 import com.vladgad.tablebudgeter.model.table.SheetsServiceHelper
 import com.vladgad.tablebudgeter.ui.theme.TableBudgeterTheme
 import com.vladgad.tablebudgeter.view.AnalyticsScreen
+import com.vladgad.tablebudgeter.view.CompactBottomBar
 import com.vladgad.tablebudgeter.view.HistoryScreen
 import com.vladgad.tablebudgeter.view.OperationScreen
+import com.vladgad.tablebudgeter.view.data.NavItem
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -101,9 +130,8 @@ class MainActivity : ComponentActivity() {
                     Column(
                         modifier = Modifier
                             .padding(innerPadding)
-                            .padding(16.dp)
                     ) {
-                        DatabaseTestButtonsScreen()
+                        MainScreen()
                     }
                 }
             }
@@ -126,24 +154,60 @@ class MainActivity : ComponentActivity() {
                 Toast.makeText(context, "Аутентификация не прошла", Toast.LENGTH_LONG)
         }
     }
-
-    @Composable
-    fun DatabaseTestButtonsScreen() {
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            OperationScreen()
-        }
-    }
-
-    @Preview(showBackground = true)
-    @Composable
-    fun DatabaseTestButtonsPreview() {
-        TableBudgeterTheme {
-            // Для превью передаем null, т.к. нет контекста
-            DatabaseTestButtonsScreen()
-        }
-    }
-
 }
 
+// Главный экран с навигацией и нижней панелью
+@Composable
+fun MainScreen() {
+    val navController = rememberNavController()
+    val items = listOf(
+        NavItem("Записи", Icons.Default.History),
+        NavItem("Добавить", Icons.Default.Add), // центральный
+        NavItem("Отчеты", Icons.Default.Analytics)
+    )
+
+    // Получаем текущий маршрут для подсветки выбранного пункта
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+    val selectedIndex = when (currentRoute) {
+        "history" -> 0
+        "operation" -> 1
+        "analytics" -> 2
+        else -> 0 // по умолчанию история
+    }
+    Scaffold(
+        bottomBar = {
+            CompactBottomBar(
+                items = items,
+                selectedIndex = selectedIndex,
+                onItemClick = { index ->
+                    val route = when (index) {
+                        0 -> "history"
+                        1 -> "operation"
+                        2 -> "analytics"
+                        else -> "history"
+                    }
+                    // Корректная навигация для bottom bar
+                    navController.navigate(route) {
+                        popUpTo(navController.graph.startDestinationId) {
+                            saveState = true
+                        }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                }
+            )
+        }
+    ) { paddingValues ->
+        // NavHost с учётом отступов от панели
+        NavHost(
+            navController = navController,
+            startDestination = "history",
+            modifier = Modifier.padding(paddingValues)
+        ) {
+            composable("history") { HistoryScreen() }
+            composable("operation") { OperationScreen() }
+            composable("analytics") { AnalyticsScreen() }
+        }
+    }
+}

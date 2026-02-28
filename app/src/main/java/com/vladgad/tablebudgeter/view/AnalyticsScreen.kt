@@ -38,7 +38,6 @@ private const val mTag = "AnalyticsScreen"
 fun AnalyticsScreen() {
     val viewModel : AnalyticsViewModel = viewModel()
     val operations by viewModel.operations.collectAsState()
-
     AnalyticsScreen2(operations)
 }
 
