@@ -16,31 +16,23 @@ import io.ktor.http.*
 class KtorClient {
 
     companion object {
-        @Volatile
-        private var INSTANCE: HttpClient? = null
-        fun getInstanceClientSheets(): HttpClient {
-            return INSTANCE?: synchronized(this){
-                val client = HttpClient {
-                    install(io.ktor.client.plugins.contentnegotiation.ContentNegotiation) {
-                        gson {
-                            setPrettyPrinting()
-                            disableHtmlEscaping()
-                        }
-                    }
-
-                    // Базовая конфигурация
-                    defaultRequest {
-                        contentType(ContentType.Application.Json)
-                        accept(ContentType.Application.Json)
+        val INSTANCE_HTTP_CLIENT: HttpClient by lazy {
+            HttpClient {
+                install(io.ktor.client.plugins.contentnegotiation.ContentNegotiation) {
+                    gson {
+                        setPrettyPrinting()
+                        disableHtmlEscaping()
                     }
                 }
-                INSTANCE = client
-                client
+
+                // Базовая конфигурация
+                defaultRequest {
+                    contentType(ContentType.Application.Json)
+                    accept(ContentType.Application.Json)
+                }
             }
         }
     }
-
-
 }
 
 

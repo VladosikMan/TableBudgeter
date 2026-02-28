@@ -30,6 +30,8 @@ import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
 import com.vladgad.tablebudgeter.R
+import com.vladgad.tablebudgeter.utils.Constants
+import com.vladgad.tablebudgeter.utils.Constants.WEB_CLIENT_ID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.security.SecureRandom
@@ -104,7 +106,7 @@ class GoogleSignInUtils {
             return GetGoogleIdOption.Builder()
                 .setFilterByAuthorizedAccounts(true)
                 .setAutoSelectEnabled(true)
-                .setServerClientId(context.getString(R.string.web_client_id))
+                .setServerClientId(WEB_CLIENT_ID)
                 .setNonce(generateSecureRandomNonce())
                 .build()
         }

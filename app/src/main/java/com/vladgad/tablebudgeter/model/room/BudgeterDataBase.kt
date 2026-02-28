@@ -16,19 +16,12 @@ abstract class BudgeterDataBase : RoomDatabase() {
     abstract fun operationDAO(): OperationDAO
 
     companion object {
-        @Volatile
-        private var INSTANCE: BudgeterDataBase? = null
-
-        fun getInstance(): BudgeterDataBase {
-            return INSTANCE ?: synchronized(this) {
-                val instance = Room.databaseBuilder(
-                    BudgeterApp.instance.applicationContext,
-                    BudgeterDataBase::class.java,
-                    BudgeterApp.instance.resources.getString(R.string.database_budg)
-                ).build()
-                INSTANCE = instance
-                instance
-            }
+        val INSTANCE_ROOM_DATABASE: BudgeterDataBase by lazy {
+            Room.databaseBuilder(
+                BudgeterApp.instance.applicationContext,
+                BudgeterDataBase::class.java,
+                BudgeterApp.instance.resources.getString(R.string.database_budg)
+            ).build()
         }
     }
 }

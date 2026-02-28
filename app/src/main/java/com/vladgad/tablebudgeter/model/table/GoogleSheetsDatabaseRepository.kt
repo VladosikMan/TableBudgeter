@@ -3,19 +3,16 @@ package com.vladgad.tablebudgeter.model.table
 import com.vladgad.tablebudgeter.model.OperationRepository
 import com.vladgad.tablebudgeter.model.data.Operation
 import com.vladgad.tablebudgeter.model.data.OperationStatus
+import com.vladgad.tablebudgeter.utils.Constants.GOOGLE_SHEET_ID
+import com.vladgad.tablebudgeter.utils.Constants.GOOGLE_SHEET_ID_PAGE
 
 class GoogleSheetsDatabaseRepository() : OperationRepository {
 
-    private lateinit var spreadsheetId: String
-    private var sheetId: Long = -1
-
-    fun setId(spreadsheetId: String, sheetId: Long) {
-        this.spreadsheetId = spreadsheetId
-        this.sheetId = sheetId
-    }
+    private val spreadsheetId: String = GOOGLE_SHEET_ID
+    private val sheetId: Long = GOOGLE_SHEET_ID_PAGE
 
     private val database: SheetsServiceHelper by lazy {
-        SheetsServiceHelper.getInstance()
+        SheetsServiceHelper.INSTANCE_SHEET_HELPER
     }
 
     fun updateAccessToken(token: String) {

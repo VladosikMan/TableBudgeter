@@ -6,12 +6,27 @@ import com.vladgad.tablebudgeter.model.data.Operation
 import com.vladgad.tablebudgeter.model.data.OperationStatus
 import com.vladgad.tablebudgeter.model.room.BudgeterDataBaseRepository
 import com.vladgad.tablebudgeter.model.table.GoogleSheetsDatabaseRepository
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 
 class Repository : OperationRepository {
+    private val _operations = MutableStateFlow<List<Operation>>(emptyList())
+    val operations: StateFlow<List<Operation>> = _operations.asStateFlow()
+
     //класс настройки логиги и работы с источниками данных
+    companion object {
+        val INSTANCE_REPOSITORY: Repository by lazy { Repository() }
+    }
+
     private val roomDatabase = BudgeterDataBaseRepository()
     private val googleTableDataBase: GoogleSheetsDatabaseRepository =
         GoogleSheetsDatabaseRepository()
+
+    fun updateGoogleToken(token : String){
+        googleTableDataBase.updateAccessToken(token)
+    }
 
     override suspend fun insertOperation(operation: Operation): OperationStatus {
         try {
@@ -27,22 +42,35 @@ class Repository : OperationRepository {
     override suspend fun insertOperations(operations: List<Operation>): OperationStatus {
         val statusRoom = roomDatabase.insertOperations(operations)
         val statusGoogle = googleTableDataBase.insertOperations(operations)
+        _operations.update {
+            it + operations
+        }
         return checkStatusInsert(statusRoom, statusGoogle)
     }
 
     override suspend fun getOperation(id: Long): OperationStatus {
-        val res =  googleTableDataBase.getOperation(id)
-        return if(res is OperationStatus.SuccessResult)
-            OperationStatus.GetOperationsStatus(StatusOperationEnum.ALL_REPOSITORY_SUCCESS.code, res.listResult)
+        val res = googleTableDataBase.getOperation(id)
+        return if (res is OperationStatus.SuccessResult)
+            OperationStatus.GetOperationsStatus(
+                StatusOperationEnum.ALL_REPOSITORY_SUCCESS.code,
+                res.listResult
+            )
         else
             OperationStatus.GetOperationsStatus(StatusOperationEnum.GOOGLE_ERROR.code, null)
     }
 
     override suspend fun getAllOperations(): OperationStatus {
-        val res =  googleTableDataBase.getAllOperations()
-        return if(res is OperationStatus.SuccessResult)
-            OperationStatus.GetOperationsStatus(StatusOperationEnum.ALL_REPOSITORY_SUCCESS.code, res.listResult)
-        else
+        val res = googleTableDataBase.getAllOperations()
+        return if (res is OperationStatus.SuccessResult) {
+            _operations.update {
+                res.listResult
+            }
+            OperationStatus.GetOperationsStatus(
+                StatusOperationEnum.ALL_REPOSITORY_SUCCESS.code,
+                res.listResult
+            )
+
+        } else
             OperationStatus.GetOperationsStatus(StatusOperationEnum.GOOGLE_ERROR.code, null)
     }
 
