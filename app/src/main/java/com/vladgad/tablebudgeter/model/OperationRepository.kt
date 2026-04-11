@@ -3,6 +3,7 @@ package com.vladgad.tablebudgeter.model
 import com.vladgad.tablebudgeter.model.data.Operation
 import com.vladgad.tablebudgeter.model.data.OperationStatus
 
+
 interface OperationRepository {
 
 

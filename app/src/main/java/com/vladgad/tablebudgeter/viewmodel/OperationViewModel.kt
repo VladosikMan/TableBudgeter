@@ -10,7 +10,10 @@ import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.CardGiftcard
+import androidx.compose.material.icons.filled.Checkroom
+import androidx.compose.material.icons.filled.CleaningServices
 import androidx.compose.material.icons.filled.Copyright
+import androidx.compose.material.icons.filled.Devices
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Face
@@ -28,6 +31,7 @@ import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Pets
 import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.Print
 import androidx.compose.material.icons.filled.Redeem
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Sell
@@ -77,7 +81,11 @@ class OperationViewModel : ViewModel() {
         ChipElement(Icons.Default.Palette, "Хобби"),
         ChipElement(Icons.Default.LocalBar, "Алкоголь"),
         ChipElement(Icons.Default.VolunteerActivism, "Благотворительность"),
-        ChipElement(Icons.Default.MoreHoriz, "Прочее")
+        ChipElement(Icons.Default.MoreHoriz, "Прочее"),
+        ChipElement(Icons.Default.Checkroom, "Одежда"),
+        ChipElement(Icons.Default.Devices, "Техника"),
+        ChipElement(Icons.Default.Print, "Печать"),
+        ChipElement(Icons.Default.CleaningServices, "Хозяйственные товары"),
     )
 
     // Расширенный список категорий доходов
@@ -101,7 +109,7 @@ class OperationViewModel : ViewModel() {
     )
     val accounts = listOf(
         ChipElement(Icons.Default.AccountBalance, "Т-Банк"),
-        ChipElement(Icons.Default.AccountBalanceWallet, "Сбер"),
+        ChipElement(Icons.Default.AccountBalanceWallet, "Сбербанк"),
         ChipElement(Icons.Default.Business, "ВТБ"),
         ChipElement(Icons.Default.Money, "Наличка"),
     )

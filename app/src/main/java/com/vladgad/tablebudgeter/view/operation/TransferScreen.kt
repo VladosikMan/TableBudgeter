@@ -36,7 +36,7 @@ import com.vladgad.tablebudgeter.viewmodel.OperationViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TransferScreen(viewModel: OperationViewModel) {
-    val accounts = listOf("Т-Банк", "Сбер", "ВТБ", "Наличка")
+    val accounts = listOf("Т-Банк", "Сбербанк", "ВТБ", "Наличка")
 
     var fromAccount by remember { mutableStateOf(accounts[0]) }
     var toAccount by remember { mutableStateOf(accounts[1]) }

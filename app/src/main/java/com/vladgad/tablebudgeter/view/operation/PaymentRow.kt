@@ -36,7 +36,7 @@ fun PaymentRow(
 ) {
     val accounts = listOf(
         ChipElement(Icons.Default.AccountBalance, "Т-Банк"),
-        ChipElement(Icons.Default.AccountBalanceWallet, "Сбер"),
+        ChipElement(Icons.Default.AccountBalanceWallet, "Сбербанк"),
         ChipElement(Icons.Default.Business, "ВТБ"),
         ChipElement(Icons.Default.Money, "Наличка"),
     )

@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
+    alias (libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -126,6 +127,6 @@ dependencies {
     // ViewModel integration with Navigation3
     implementation(libs.androidx.lifecycle.viewmodel.navigation3)
 
-    implementation("androidx.compose.material:material-icons-extended:current_version")
+    implementation(libs.androidx.compose.material.icons.extended)
 
 }
